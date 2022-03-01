@@ -149,6 +149,7 @@ def scrape():
 crawl_state = CrawlStateSingleton.get_instance()
 x = 0
 while True:
+    print("here")
     x = x + 1
     if x == 100:
         raise Exception
