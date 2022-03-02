@@ -1,162 +1,153 @@
-import base64
-from concurrent import futures
-from sgscrape.sgrecord import SgRecord
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgzip.dynamic import SearchableCountries, DynamicGeoSearch
-from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
+import json
+from sgscrape import simple_scraper_pipeline as sp
+from sgpostal.sgpostal import parse_address_intl
 
 
-def get_cookies(session):
-    out = dict()
-    r = session.get("https://www.ingles-pharmacy.com/inweb/")
-    for k, v in r.cookies.items():
-        out[k] = v
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
 
-    return out
-
-
-def get_csrf(session, headers, cookies):
-    data = {"formParams": '""'}
-    url = "https://www.ingles-pharmacy.com/inweb/appload.htm"
-    r = session.post(url, headers=headers, cookies=cookies, data=data)
-    token = r.json()["token"][0]
-
-    return token
-
-
-def get_ids(session, headers, cookies):
-    search = DynamicGeoSearch(country_codes=[SearchableCountries.USA])
-    api = "https://www.ingles-pharmacy.com/inweb/getStoreList.htm"
-    for lat, lng in search:
-        data = {
-            "formParams": '{"storeData":"","lat":'
-            + f'"{lat}","lng":'
-            + f'"{lng}","loggedIn":0'
-            + "}"
-        }
-
-        r = session.post(api, data=data, headers=headers, cookies=cookies)
-        r.json()
-
-        if r.json().get("status") == "FAILURE":
-            continue
-        js = r.json()["data"]["stores"]["stores_list"]
-
-        for j in js:
-            latitude = j["latitude"]
-            longitude = j["longitude"]
-            search.found_location_at(latitude, longitude)
-            crawl_state.push_request(SerializableRequest(url=j["id"]))
-
-    crawl_state.set_misc_value("got_urls", True)
-
-
-def get_data(_id, sgw: SgWriter, session, headers, cookies):
-    locator_domain = "https://www.ingles-pharmacy.com/"
-    _id = _id.replace("/", "")
-    data = {"formParams": '{"store_id":"' + _id + '","isLogged":"0"}'}
-    api = "https://www.ingles-pharmacy.com/inweb/getStoreDetails.htm"
-    r = session.post(api, headers=headers, data=data, cookies=cookies)
-    j = r.json()["data"]["stores"]
-
-    location_name = j.get("store_name")
-    slug = base64.b64encode(_id.encode("utf8")).decode("utf8")
-    page_url = f"https://www.ingles-pharmacy.com/inweb/#/store/details/{slug}"
-    street_address = j.get("addressline1")
-    city = j.get("city")
-    state = j.get("state")
-    postal = j.get("zip")
-    phone = j.get("phone")
-    latitude = j.get("latitude")
-    longitude = j.get("longitude")
-    store_number = j.get("store_identifier")
-
-    _tmp = []
-    hours = j.get("hours") or []
-    for h in hours:
-        day = h.get("day")
-        inter = h.get("hours")
-        _tmp.append(f"{day}: {inter}")
-    hours_of_operation = ";".join(_tmp)
-
-    row = SgRecord(
-        page_url=page_url,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=postal,
-        country_code="US",
-        phone=phone,
-        store_number=store_number,
-        latitude=latitude,
-        longitude=longitude,
-        locator_domain=locator_domain,
-        hours_of_operation=hours_of_operation,
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=False,
+            ).driver()
 
-    sgw.write_row(row)
+            driver.get(url)
+
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
 
 
-def fetch_data(sgw: SgWriter, session, headers, cookies):
-    if not crawl_state.get_misc_value("got_urls"):
-        get_ids(session, headers, cookies)
+def get_data():
+    session = SgRequests()
+    url = "https://headquartersoffice.com/amazon"
+    class_name = "inside-page-hero"
+    driver = get_driver(url, class_name)
+    test = driver.execute_script("var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;")
 
-    ids = [loc.url for loc in crawl_state.request_stack_iter()]
+    for item in test:
+        if "base64" in item["name"] and "marker-list" in item["name"]:
+            response = session.get(item["name"]).json()
+            break
+    
+    with open("file.txt", "w", encoding="utf-8") as output:
+        json.dump(response, output, indent=4)
+    for location in response:
+        locator_domain = "https://headquartersoffice.com/"
+        page_url = driver.current_url
+        location_name = location["title"]
+        latitude = location["lat"]
+        longitude = location["lng"]
+        
+        city_state_country = location_name.split(", ")
+        if len(city_state_country) == 2:
+            city = city_state_country[0]
+            state = "<MISSING>"
+            country_code = city_state_country[1]
+        
+        else:
+            city = city_state_country[0]
+            state = city_state_country[1]
+            country_code = city_state_country[-1]
 
-    with futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {
-            executor.submit(get_data, _id, sgw, session, headers, cookies): _id
-            for _id in ids
+        store_number = location["id"]
+        address = location["address"]
+
+        if "+" in address:
+            address = "".join(part + " " for part in address.split(" ")[1:])
+        
+        if latitude in address and longitude in address:
+            address = "<MISSING>"
+        
+        if address != "<MISSING>":
+            addr = parse_address_intl(address)
+            print("")
+            print(address)
+            print(addr)
+            print("")
+
+
+
+        zipp = "<MISSING>"
+        phone = "<LATER>"
+        location_type = "<LATER>"
+        hours = "<LATER>"
+
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
         }
-        for future in futures.as_completed(future_to_url):
-            future.result()
 
 
 def scrape():
-    session = SgRequests()
-    cookies = get_cookies(session)
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Accept-Language": "ru,en-US;q=0.7,en;q=0.3",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "csrfPreventionSalt": "",
-        "X-Requested-With": "XMLHttpRequest",
-        "Origin": "https://www.ingles-pharmacy.com",
-        "Connection": "keep-alive",
-        "Referer": "https://www.ingles-pharmacy.com/inweb/",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-    }
-    csrf = get_csrf(session, cookies, headers)
-    headers["csrfPreventionSalt"] = csrf
-
-    with SgWriter(
-        SgRecordDeduper(
-            RecommendedRecordIds.PageUrlId, duplicate_streak_failure_factor=-1
-        )
-    ) as writer:
-        fetch_data(writer, session, headers, cookies)
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
 
-crawl_state = CrawlStateSingleton.get_instance()
-x = 0
-while True:
-    print("here")
-    x = x + 1
-    if x == 100:
-        raise Exception
-    try:
-        scrape()
-        break
-
-    except Exception as e:
-        print(e)
-        continue
+scrape()
