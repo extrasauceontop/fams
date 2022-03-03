@@ -197,7 +197,11 @@ def old_map_page(driver):
 
             session = SgRequests()
             url = item["name"]
-            response = session.get(url).json()
+            try:
+                response = session.get(url).json()
+            
+            except Exception:
+                continue
 
             if "markers" in response.keys():
                 break
