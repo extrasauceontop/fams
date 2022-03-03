@@ -95,6 +95,7 @@ def get_driver(url, class_name, driver=None):
 
 
 def new_map_page(driver):
+    locations = []
     while True:
         try:
             element = driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").find_element_by_css_selector("a")
@@ -167,7 +168,7 @@ def new_map_page(driver):
             location_type = page_url.split("/")[-1]
             hours = "<MISSING>"
 
-            yield {
+            locations.append({
                 "locator_domain": locator_domain,
                 "page_url": page_url,
                 "location_name": location_name,
@@ -182,11 +183,13 @@ def new_map_page(driver):
                 "location_type": location_type,
                 "hours": hours,
                 "country_code": country_code,
-            }
+            })
+    
+    return locations
 
 
 def old_map_page(driver):
-
+    locations = []
     test = driver.execute_script("var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;")
     for item in test:
         if "base64" in item["name"]:
@@ -272,7 +275,7 @@ def old_map_page(driver):
             zipp = "<MISSING>"
             country_code = "<MISSING>"
 
-        yield {
+        locations.append({
             "locator_domain": locator_domain,
             "page_url": page_url,
             "location_name": location_name,
@@ -287,7 +290,9 @@ def old_map_page(driver):
             "location_type": location_type,
             "hours": hours,
             "country_code": country_code,
-        }
+        })
+    
+    return locations
 
 
 def get_data():
