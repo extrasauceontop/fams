@@ -46,6 +46,7 @@ def get_driver(url, class_name, driver=None):
 
 
 def get_data():
+    print("herehereherehereherehereherehereherehereherehere")
     session = SgRequests()
     url = "https://headquartersoffice.com/amazon"
     class_name = "inside-page-hero"
