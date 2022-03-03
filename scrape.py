@@ -95,6 +95,7 @@ def get_data():
                 full_address = "<MISSING>"
             
             if full_address != "<MISSING>":
+                print(full_address)
                 addr = parse_address_intl(full_address)
                 print(addr)
                 print("")
