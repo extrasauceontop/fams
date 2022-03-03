@@ -89,15 +89,12 @@ def get_driver(url, class_name, driver=None):
                     "Make sure this ran with a Proxy, will fail without one"
                 )
             continue
+    
+    driver.maximize_window()
     return driver
 
 
 def new_map_page(driver):
-    url = "https://headquartersoffice.com/amazon"
-    class_name = "inside-page-hero"
-    driver = get_driver(url, class_name)
-    driver.maximize_window()
-    
     while True:
         try:
             element = driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").find_element_by_css_selector("a")
