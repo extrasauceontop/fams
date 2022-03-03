@@ -66,17 +66,10 @@ def get_data():
         latitude = location["lat"]
         longitude = location["lng"]
         
-        city_state_country = location_name.split(", ")
-        if len(city_state_country) == 2:
-            city = city_state_country[0]
-            state = "<MISSING>"
-            country_code = city_state_country[1]
-        
-        else:
-            city = city_state_country[0]
-            state = city_state_country[1]
-            country_code = city_state_country[-1]
-
+        city = "<LATER>"
+        state = "<LATER>"
+        zipp = "<LATER>"
+        country_code = "<MISSING>"
         store_number = location["id"]
         address = location["address"]
 
