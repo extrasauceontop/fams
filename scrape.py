@@ -102,7 +102,6 @@ def new_map_page(driver):
             time.sleep(2)
 
         except Exception as e:
-            print(e)
             break
 
     test = driver.execute_script("var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;")
@@ -136,10 +135,7 @@ def new_map_page(driver):
                 full_address = "<MISSING>"
             
             if full_address != "<MISSING>":
-                print(full_address)
                 addr = parse_address_intl(full_address)
-                print(addr)
-                print("")
                 city = addr.city
                 if city is None:
                     city = "<MISSING>"
@@ -326,7 +322,8 @@ def get_data():
                     x = x+1
                     locations = new_map_page(driver)
                     found = 1
-                    
+                    if len(locations) == 0:
+                        print(driver.current_url)
                     for loc in locations:
                         yield loc
 
@@ -335,7 +332,8 @@ def get_data():
 
             if found == 0:
                 locations = old_map_page(driver)
-
+                if len(locations) == 0:
+                    print(driver.current_url)
                 for loc in locations:
                     yield loc
                 y = y+1
