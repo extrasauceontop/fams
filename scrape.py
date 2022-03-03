@@ -201,7 +201,10 @@ def old_map_page(driver):
 
             if "markers" in response.keys():
                 break
-
+    
+    if response is None:
+        print(driver.current_url)
+        raise Exception
     for location in response["markers"]:
         locator_domain = "https://headquartersoffice.com/"
         page_url = driver.current_url
