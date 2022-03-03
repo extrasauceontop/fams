@@ -145,6 +145,9 @@ def get_data():
 
     locations = old_map_page(driver)
 
+    for loc in locations:
+        yield loc
+
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
