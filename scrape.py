@@ -87,6 +87,11 @@ def get_data():
                 full_address = "".join(part + " " for part in address.split(" ")[1:])
             
             if latitude in full_address and longitude in full_address:
+                city = "<MISSING>"
+                address = "<MISSING>"
+                state = "<MISSING>"
+                zipp = "<MISSING>"
+                country_code = "<MISSING>"
                 full_address = "<MISSING>"
             
             if full_address != "<MISSING>":
