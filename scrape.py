@@ -97,27 +97,27 @@ def get_data():
             if full_address != "<MISSING>":
                 addr = parse_address_intl(full_address)
                 
-                city = addr["city"]
+                city = addr.city
                 if city is None:
                     city = "<MISSING>"
                 
-                address_1 = addr["street_address_1"]
-                address_2 = addr["street_address_2"]
+                address_1 = addr.street_address_1
+                address_2 = addr.street_address_2
 
                 if address_1 is None and address_2 is None:
                     address = "<MISSING>"
                 else:
                     address = (address_1 + " " + address_2).strip()
                 
-                state = addr["state"]
+                state = addr.state
                 if state is None:
                     state = "<MISSING>"
                 
-                zipp = addr["postcode"]
+                zipp = addr.postcode
                 if zipp is None:
                     zipp = "<MISSING>"
                 
-                country_code = addr["country"]
+                country_code = addr.country
                 if country_code is None:
                     country_code = "<MISSING>"
 
