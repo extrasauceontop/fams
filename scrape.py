@@ -107,7 +107,7 @@ def get_data():
                 if address_1 is None and address_2 is None:
                     address = "<MISSING>"
                 else:
-                    address = (address_1 + " " + address_2).strip()
+                    address = (str(address_1) + " " + str(address_2)).strip()
                 
                 state = addr.state
                 if state is None:
