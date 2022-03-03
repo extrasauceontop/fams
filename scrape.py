@@ -58,70 +58,72 @@ def get_data():
         try:
             element = driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").find_element_by_css_selector("a")
             driver.execute_script("arguments[0].click();", element)
-
-            print("asdufi qwuernhnc8fwger")
+            time.sleep(2)
             break
+
         except Exception as e:
             print(e)
             time.sleep(10)
 
     test = driver.execute_script("var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;")
 
+    responses = []
     for item in test:
         if "base64" in item["name"] and "marker-list" in item["name"]:
             response = session.get(item["name"]).json()
-            break
+            responses.append(response)
     
-    for location in response["meta"]:
-        locator_domain = "https://headquartersoffice.com/"
-        page_url = driver.current_url
-        location_name = location["title"]
-        latitude = location["lat"]
-        longitude = location["lng"]
-        
-        city = "<LATER>"
-        state = "<LATER>"
-        zipp = "<LATER>"
-        country_code = "<MISSING>"
-        store_number = location["id"]
-        address = location["address"]
+    for response in responses:
+        for location in response["meta"]:
+            locator_domain = "https://headquartersoffice.com/"
+            page_url = driver.current_url
+            location_name = location["title"]
+            latitude = location["lat"]
+            longitude = location["lng"]
+            
+            city = "<LATER>"
+            state = "<LATER>"
+            zipp = "<LATER>"
+            country_code = "<MISSING>"
+            store_number = location["id"]
+            address = location["address"]
 
-        if "+" in address:
-            address = "".join(part + " " for part in address.split(" ")[1:])
-        
-        if latitude in address and longitude in address:
-            address = "<MISSING>"
-        
-        if address != "<MISSING>":
-            addr = parse_address_intl(address)
-            print("")
-            print(address)
-            print(addr)
-            print("")
+            if "+" in address:
+                address = "".join(part + " " for part in address.split(" ")[1:])
+            
+            if latitude in address and longitude in address:
+                address = "<MISSING>"
+            
+            if address != "<MISSING>":
+                addr = parse_address_intl(address)
+                print("")
+                print(address)
+                print(addr)
+                print("")
 
 
 
-        zipp = "<MISSING>"
-        phone = "<LATER>"
-        location_type = "<LATER>"
-        hours = "<LATER>"
+            zipp = "<MISSING>"
+            phone = "<LATER>"
+            location_type = "<LATER>"
+            hours = "<LATER>"
 
-        yield {
-            "locator_domain": locator_domain,
-            "page_url": page_url,
-            "location_name": location_name,
-            "latitude": latitude,
-            "longitude": longitude,
-            "city": city,
-            "store_number": store_number,
-            "street_address": address,
-            "state": state,
-            "zip": zipp,
-            "phone": phone,
-            "location_type": location_type,
-            "hours": hours,
-            "country_code": country_code,
-        }
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
 
 def scrape():
