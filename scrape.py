@@ -84,7 +84,7 @@ def get_data():
             full_address = location["address"]
 
             if "+" in full_address:
-                full_address = "".join(part + " " for part in address.split(" ")[1:])
+                full_address = "".join(part + " " for part in full_address.split(" ")[1:])
             
             if latitude in full_address and longitude in full_address:
                 city = "<MISSING>"
