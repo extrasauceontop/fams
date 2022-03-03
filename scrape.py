@@ -26,7 +26,7 @@ def get_driver(url, class_name, driver=None):
             driver = SgChrome(
                 executable_path=ChromeDriverManager().install(),
                 user_agent=user_agent,
-                is_headless=False,
+                is_headless=True,
             ).driver()
 
             driver.get(url)
