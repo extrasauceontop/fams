@@ -52,10 +52,11 @@ def get_data():
     url = "https://headquartersoffice.com/amazon"
     class_name = "inside-page-hero"
     driver = get_driver(url, class_name)
+    driver.maximize_window()
     
     while True:
         try:
-            driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").find_element_by_css_selector("a").click()
+            driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").find_element_by_css_selector("a").is_selected()
             print("asdufi qwuernhnc8fwger")
             break
         except Exception as e:
