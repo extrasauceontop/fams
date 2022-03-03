@@ -59,7 +59,7 @@ def get_data():
     
     with open("file.txt", "w", encoding="utf-8") as output:
         json.dump(response, output, indent=4)
-    for location in response:
+    for location in response["meta"]:
         locator_domain = "https://headquartersoffice.com/"
         page_url = driver.current_url
         location_name = location["title"]
