@@ -9,8 +9,54 @@ from sgscrape import simple_scraper_pipeline as sp
 from sgpostal.sgpostal import parse_address_intl
 import ssl
 import time
+from bs4 import BeautifulSoup as bs
 
 ssl._create_default_https_context = ssl._create_unverified_context
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
+    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+}
+
+
+def get_page_urls():
+    start_url = "https://headquartersoffice.com/page/"
+    x = 0
+
+    final_links = []
+    while True:
+        x = x+1
+        url = start_url + str(x) + "/?s"
+
+        try:
+            response = session.get(url, headers=headers).text
+
+        except Exception:
+            print(url)
+            break
+        if "looks like nothing was found at this location" in response:
+            break
+
+        soup = bs(response, "html.parser")
+        testings = soup.find_all("h2", attrs={"class": "entry-title"})
+        for test in testings:
+            if test.find("a").text.strip()[0].isalpha() is False or test.find("a").text.strip()[0] == "(":
+                try:
+                    print(test.find("a").text.strip())
+                    print(test.find("a")["href"])
+                
+                except Exception:
+                    print(test.find("a")["href"])
+            
+                print("")
+                print("")
+
+        links = [h2_tag.find("a")["href"] for h2_tag in soup.find_all("h2", attrs={"class": "entry-title"}) if h2_tag.find("a").text.strip()[0].isalpha() is True or h2_tag.find("a").text.strip()[0] == "("]
+
+        for link in links:
+            final_links.append(link)
+
+    return final_links
 
 
 def get_driver(url, class_name, driver=None):
@@ -46,9 +92,7 @@ def get_driver(url, class_name, driver=None):
     return driver
 
 
-def get_data():
-
-    session = SgRequests()
+def new_map_page(driver):
     url = "https://headquartersoffice.com/amazon"
     class_name = "inside-page-hero"
     driver = get_driver(url, class_name)
@@ -146,6 +190,51 @@ def get_data():
                 "hours": hours,
                 "country_code": country_code,
             }
+
+
+def get_data():
+    page_urls = get_page_urls()
+    x = 0
+    y = 0
+    for page_url in page_urls:
+        if page_url == page_urls[0]:
+            driver = get_driver(page_url, "inside-page-hero")
+        
+        else:
+            try:
+                driver.get(page_url)
+            
+            except Exception:
+                driver = get_driver(page_url, "inside-page-hero", driver=driver)
+
+        response = driver.page_source
+        soup = bs(response, "html.parser")
+
+        map_object = soup.find("div", attrs={"class": "wpgmza_map"})
+        if map_object is None:
+            continue
+        
+        else:
+            time.sleep(1)
+            test = driver.execute_script("var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;")
+            
+            found = 0
+            for item in test:
+                if "base64" in item["name"] and "marker-list" in item["name"]:
+                    x = x+1
+                    locations = new_map_page(driver)
+                    found = 1
+                    
+                    for loc in locations:
+                        yield loc
+
+                    break
+
+            if found == 0:
+                y = y+1
+
+    print(x)
+    print(y)
 
 
 def scrape():
