@@ -8,6 +8,7 @@ import json
 from sgscrape import simple_scraper_pipeline as sp
 from sgpostal.sgpostal import parse_address_intl
 import ssl
+import time
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -59,7 +60,7 @@ def get_data():
             break
         except Exception as e:
             print(e)
-            break
+            time.sleep(10)
 
     test = driver.execute_script("var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;")
 
