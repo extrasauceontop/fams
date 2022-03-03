@@ -46,11 +46,19 @@ def get_driver(url, class_name, driver=None):
 
 
 def get_data():
-    print("herehereherehereherehereherehereherehereherehere")
+
     session = SgRequests()
     url = "https://headquartersoffice.com/amazon"
     class_name = "inside-page-hero"
     driver = get_driver(url, class_name)
+    
+    while True:
+        try:
+            driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").click()
+            print("asdufi qwuernhnc8fwger")
+        except Exception:
+            break
+
     test = driver.execute_script("var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;")
 
     for item in test:
@@ -58,8 +66,6 @@ def get_data():
             response = session.get(item["name"]).json()
             break
     
-    with open("file.txt", "w", encoding="utf-8") as output:
-        json.dump(response, output, indent=4)
     for location in response["meta"]:
         locator_domain = "https://headquartersoffice.com/"
         page_url = driver.current_url
