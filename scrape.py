@@ -80,32 +80,48 @@ def get_data():
             latitude = location["lat"]
             longitude = location["lng"]
             
-            city = "<LATER>"
-            state = "<LATER>"
-            zipp = "<LATER>"
-            country_code = "<MISSING>"
             store_number = location["id"]
-            address = location["address"]
+            full_address = location["address"]
 
-            if "+" in address:
-                address = "".join(part + " " for part in address.split(" ")[1:])
+            if "+" in full_address:
+                full_address = "".join(part + " " for part in address.split(" ")[1:])
             
-            if latitude in address and longitude in address:
-                address = "<MISSING>"
+            if latitude in full_address and longitude in full_address:
+                full_address = "<MISSING>"
             
-            if address != "<MISSING>":
-                addr = parse_address_intl(address)
-                print("")
-                print(address)
-                print(addr)
-                print("")
+            if full_address != "<MISSING>":
+                addr = parse_address_intl(full_address)
+                
+                city = addr.city
+                if city is None:
+                    city = "<MISSING>"
+                
+                address_1 = addr.street_address_1
+                address_2 = addr.street_address_2
 
+                if address_1 is None and address_2 is None:
+                    address = "<MISSING>"
+                else:
+                    address = (address_1 + " " + address_2).strip()
+                
+                state = addr.state
+                if state is None:
+                    state = "<MISSING>"
+                
+                zipp = addr.postcode
+                if zipp is None:
+                    zipp = "<MISSING>"
+                
+                country_code = addr.country
+                if country_code is None:
+                    country_code = "<MISSING>"
 
+            phone = "<MISSING>"
 
-            zipp = "<MISSING>"
-            phone = "<LATER>"
-            location_type = "<LATER>"
-            hours = "<LATER>"
+            if page_url[-1] == "/":
+                page_url = page_url[:-1]
+            location_type = page_url.split("/")[-1]
+            hours = "<MISSING>"
 
             yield {
                 "locator_domain": locator_domain,
