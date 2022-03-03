@@ -56,7 +56,9 @@ def get_data():
         try:
             driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").click()
             print("asdufi qwuernhnc8fwger")
-        except Exception:
+            break
+        except Exception as e:
+            print(e)
             break
 
     test = driver.execute_script("var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;")
