@@ -7,6 +7,9 @@ from sgrequests import SgRequests
 import json
 from sgscrape import simple_scraper_pipeline as sp
 from sgpostal.sgpostal import parse_address_intl
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_driver(url, class_name, driver=None):
