@@ -56,7 +56,13 @@ def get_data():
     
     while True:
         try:
+            status = driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").find_element_by_css_selector("a").is_selected()
+            print(status)
+
             driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").find_element_by_css_selector("a").click()
+
+            status = driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").find_element_by_css_selector("a").is_selected()
+            print(status)
             print("asdufi qwuernhnc8fwger")
             break
         except Exception as e:
