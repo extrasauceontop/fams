@@ -323,6 +323,8 @@ def get_data():
                     locations = new_map_page(driver)
                     found = 1
                     if len(locations) == 0:
+                        print("")
+                        print("new map")
                         print(driver.current_url)
                     for loc in locations:
                         yield loc
@@ -333,6 +335,8 @@ def get_data():
             if found == 0:
                 locations = old_map_page(driver)
                 if len(locations) == 0:
+                    print("")
+                    print("old map")
                     print(driver.current_url)
                 for loc in locations:
                     yield loc
