@@ -206,7 +206,12 @@ def old_map_page(driver):
             if "markers" in response.keys():
                 break
     
-    if response is None:
+    try:
+        if response is None:
+            print(driver.current_url)
+            raise Exception
+    
+    except Exception:
         print(driver.current_url)
         raise Exception
     for location in response["markers"]:
