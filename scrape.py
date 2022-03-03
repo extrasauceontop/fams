@@ -59,11 +59,10 @@ def get_data():
             element = driver.find_element_by_class_name("paginationjs-next.J-paginationjs-next").find_element_by_css_selector("a")
             driver.execute_script("arguments[0].click();", element)
             time.sleep(2)
-            break
 
         except Exception as e:
             print(e)
-            time.sleep(10)
+            break
 
     test = driver.execute_script("var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;")
 
