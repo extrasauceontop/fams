@@ -315,6 +315,7 @@ def get_data():
 
         map_object = soup.find("div", attrs={"class": "wpgmza_map"})
         if map_object is None:
+            print(page_url)
             continue
         
         else:
