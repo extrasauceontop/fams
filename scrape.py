@@ -1,3 +1,4 @@
+from pydoc import stripid
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -315,8 +316,39 @@ def get_data():
 
         map_object = soup.find("div", attrs={"class": "wpgmza_map"})
         if map_object is None:
-            print(page_url)
-            continue
+            if page_url != "https://headquartersoffice.com/privacy/" or page_url != "https://headquartersoffice.com/" or if "?" in soup.find("h1").text.strip():
+                continue
+            
+            locator_domain = "headquartersoffice.com"
+            location_name = soup.find("h1").text.strip()
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            city = "<INACCESSIBLE"
+            store_number = "<MISSING>"
+            address = "<INACCESSIBLE>"
+            state = "<INACCESSIBLE>"
+            zipp = "<INACCESSIBLE>"
+            phone = "<INACCESSIBLE>"
+            location_type = "<INACCESSIBLE>"
+            hours = "<MISSING>"
+            country_code = "<MISSING>"
+
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
         
         else:
             time.sleep(1)
