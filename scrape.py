@@ -316,7 +316,7 @@ def get_data():
 
         map_object = soup.find("div", attrs={"class": "wpgmza_map"})
         if map_object is None:
-            if page_url != "https://headquartersoffice.com/privacy/" or page_url != "https://headquartersoffice.com/" or if "?" in soup.find("h1").text.strip():
+            if page_url == "https://headquartersoffice.com/privacy/" or page_url == "https://headquartersoffice.com/" or "?" in soup.find("h1").text.strip():
                 continue
             
             locator_domain = "headquartersoffice.com"
