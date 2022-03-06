@@ -44,7 +44,8 @@ def get_driver(url, class_name, driver=None):
                 EC.presence_of_element_located((By.CLASS_NAME, class_name))
             )
             break
-        except Exception:
+        except Exception as e:
+            print(e)
             driver.quit()
             if x == 10:
                 raise Exception(
@@ -101,7 +102,8 @@ def get_data():
                     """
                 )
                 break
-            except Exception:
+            except Exception as e:
+                print(e)
                 driver = get_driver(
                     "https://www.schuh.co.uk/stores/", "secondLine", driver=driver
                 )
