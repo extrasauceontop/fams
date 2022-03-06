@@ -52,6 +52,7 @@ def get_driver(url, class_name, driver=None):
                     "Make sure this ran with a Proxy, will fail without one"
                 )
             continue
+    driver.set_script_timeout(60)
     return driver
 
 
@@ -101,13 +102,14 @@ def get_data():
                     .then(data => done(data))
                     """
                 )
+                print("here")
                 break
             except Exception as e:
                 print(e)
                 driver = get_driver(
                     "https://www.schuh.co.uk/stores/", "secondLine", driver=driver
                 )
-                continue
+                raise Exception
 
         data = data["d"]
         data = (
