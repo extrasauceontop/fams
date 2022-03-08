@@ -98,7 +98,7 @@ def get_data():
         location_type = "<MISSING>"
         
         response_text = str(response).lower()
-        phone_area = response_text.split('</span></p>')[-2].split(">")[1]
+        phone_area = response_text.split(city.lower())[-1].split("</span></p>")[0]
         print(phone_area)
         phone = "<LATER>"
         hours = "<LATER>"
