@@ -93,15 +93,10 @@ def get_data():
         if country_code is None:
             country_code = "<MISSING>"
 
-        city = "<LATER>"
         store_number = "<LATER>"
-        address = "<LATER>"
-        state = "<LATER>"
-        zipp = "<LATER>"
         phone = "<LATER>"
         location_type = "<LATER>"
         hours = "<LATER>"
-        country_code = "<LATER>"
 
         yield {
             "locator_domain": locator_domain,
