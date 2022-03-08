@@ -105,7 +105,7 @@ def get_data():
                     if city.lower() in phone_check.lower():
                         phone_part = phone_check
         
-        print(phone_check)
+        print(phone_part)
         
 
         hours = "<LATER>"
