@@ -98,7 +98,6 @@ def get_data():
 
         location_type = "<MISSING>"
         
-        found = 0
         for key in response["props"]["render"]["compProps"].keys():
             part_check = response["props"]["render"]["compProps"][key]
             for sub_key in part_check.keys():
@@ -106,11 +105,8 @@ def get_data():
                     phone_check = part_check[sub_key]
                     if city.lower() in phone_check.lower():
                         phone_part = unescape(phone_check.replace("\n", "").split("</span>")[-2].split(">")[-1].strip()).replace("Phone ", "")
-                        found = 1
                         break
-            
-            if found == 1:
-                break
+
         print(phone_part)
         
         phone = "<LATER>"
