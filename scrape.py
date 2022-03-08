@@ -1,235 +1,124 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
+from sgrequests import SgRequests
+import json
 from sgscrape import simple_scraper_pipeline as sp
-import ast
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
-search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
-
-hours_key_list = [
-    ["MonOpen", "MonClose"],
-    ["TueOpen", "TueClose"],
-    ["WedOpen", "WedClose"],
-    ["ThuOpen", "ThuClose"],
-    ["FriOpen", "FriClose"],
-    ["SatOpen", "SatClose"],
-    ["SunOpen", "SunClose"],
-]
+from sgpostal.sgpostal import parse_address_intl
 
 
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
+def extract_json(html_string):
+    json_objects = []
+    count = 0
 
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=False,
-            ).driver()
-            driver.get(url)
+    brace_count = 0
+    for element in html_string:
 
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception as e:
-            print(e)
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
-    driver.set_script_timeout(60)
-    return driver
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    if "pagesMap" in html_string[start : end + 1]:
+                        json_objects.append(json.loads(html_string[start : end + 1]))
+                    else:
+                        pass
+                except Exception:
+                    pass
+        count = count + 1
+
+    return json_objects
 
 
 def get_data():
-    search = DynamicGeoSearch(country_codes=[SearchableCountries.BRITAIN])
+    start_of_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.carmi_simple_mode%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue%2Cspecs.thunderbolt.SearchBoxModalSuggestions%3Atrue&contentType=application%2Fjson&deviceType=Other&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=0740a8de.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId="
+    end_of_url = ".json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=491&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop"
 
-    hours_key_list = [
-        ["MonOpen", "MonClose"],
-        ["TueOpen", "TueClose"],
-        ["WedOpen", "WedClose"],
-        ["ThuOpen", "ThuClose"],
-        ["FriOpen", "FriClose"],
-        ["SatOpen", "SatClose"],
-        ["SunOpen", "SunClose"],
-    ]
-    driver = get_driver("https://www.schuh.co.uk/stores/", "secondLine")
 
-    for search_lat, search_lon in search:
-        while True:
-            try:
-                data = driver.execute_async_script(
-                    r"""
-                    var done = arguments[0]
-                    fetch('https://schuhservice.schuh.co.uk/StoreFinderService/GetNearbyBranchesByLocation', {
-                "headers": {
-                    "accept": "application/json, text/javascript, */*; q=0.01",
-                    "accept-language": "en-US,en;q=0.9",
-                    "cache-control": "no-cache",
-                    "content-type": "application/json;charset=UTF-8;",
-                    "sec-ch-ua-mobile": "?0",
-                    "sec-fetch-dest": "empty",
-                    "sec-fetch-mode": "cors",
-                    "sec-fetch-site": "same-site"
-                },
-                "referrer": "https://www.schuh.co.uk/",
-                "referrerPolicy": "strict-origin-when-cross-origin",
-                "body": '{"lat":"""
-                    + str(search_lat)
-                    + r""","lon":"""
-                    + str(search_lon)
-                    + r""","culture":"en-gb"}',
-                "method": "POST",
-                "mode": "cors",
-                "credentials": "include"
-                    })
-                    .then(res => res.json())
-                    .then(data => done(data))
-                    """
-                )
-                print("here")
-                break
-            except Exception as e:
-                print(e)
-                driver = get_driver(
-                    "https://www.schuh.co.uk/stores/", "secondLine", driver=driver
-                )
-                raise Exception
+    session = SgRequests()
+    url = "https://www.dunkindonuts.co.nz/locations"
+    response = session.get(url).text
 
-        data = data["d"]
-        data = (
-            data.replace('"', "'")
-            .replace("true", "True")
-            .replace("false", "False")
-            .replace("'s", "s")
-        )
+    json_objects = extract_json(response)
+    loc_dict = json_objects[0]["siteFeaturesConfigs"]["router"]["pagesMap"]
 
+    for location_id in loc_dict.keys():
+        json_page_name = loc_dict[location_id]["pageJsonFileName"]
+        page_url = start_of_url + json_page_name + end_of_url
+
+        response = session.get(page_url).json()
+        for key in response["props"]["render"]["compProps"].keys():
+            needed_id = key
+            break
+        
         try:
-            data = ast.literal_eval(data)
+            if "CLOSED" not in str(response["props"]["render"]["compProps"]):
+                response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["title"]
+            else:
+                continue
         except Exception:
             continue
+        
+        locator_domain = "dunkindonuts.co.nz"
+        location_name = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["title"]
+        latitude = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["latitude"]
+        longitude = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["longitude"]
+        
+        full_address = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["address"]
+        addr = parse_address_intl(full_address)
+        
+        city = addr.city
+        if city is None:
+            city = "<MISSING>"
 
-        for location in data:
-            locator_domain = "schuh.co.uk"
-            page_url = "https://www.schuh.co.uk/stores/" + location[
-                "BranchName"
-            ].lower().replace(" ", "-")
-            location_name = location["BranchName"]
-            city = location["BranchCity"]
-            zipp = location["BranchPostcode"]
-            country_code = "UK"
-            store_number = location["BranchRef"]
-            phone = location["BranchPhone"]
-            latitude = location["BranchLatitude"]
-            longitude = location["BranchLongitude"]
+        address_1 = addr.street_address_1
+        address_2 = addr.street_address_2
 
-            while True:
-                try:
-                    location_data = driver.execute_async_script(
-                        r"""
-                        var done = arguments[0]
-                        fetch("https://schuhservice.schuh.co.uk/StoreFinderService/GetAdditionalBranchInfo", {
-                        "headers": {
-                            "accept": "application/json, text/javascript, */*; q=0.01",
-                            "accept-language": "en-US,en;q=0.9",
-                            "cache-control": "no-cache",
-                            "content-type": "application/json;charset=UTF-8;",
-                            "sec-ch-ua-mobile": "?0",
-                            "sec-fetch-dest": "empty",
-                            "sec-fetch-mode": "cors",
-                            "sec-fetch-site": "same-site"
-                        },
-                        "referrer": "https://www.schuh.co.uk/",
-                        "referrerPolicy": "strict-origin-when-cross-origin",
-                        "body": '{"branchName":\""""
-                        + location["BranchName"].lower().replace(" ", "-")
-                        + r"""\","culture":"en-gb"}',
-                        "method": "POST",
-                        "mode": "cors",
-                        "credentials": "include"
-                        })
-                        .then(res => res.json())
-                        .then(data => done(data))
-                        """
-                    )
-                    break
-                except Exception:
-                    driver = get_driver(
-                        "https://www.schuh.co.uk/stores/", "secondLine", driver=driver
-                    )
-                    continue
+        if address_1 is None and address_2 is None:
+            address = "<MISSING>"
+        else:
+            address = (str(address_1) + " " + str(address_2)).strip()
 
-            location_data = location_data["d"]
-
-            location_data = (
-                location_data.replace('"', "'")
-                .replace("true", "True")
-                .replace("false", "False")
-                .replace("\\", "")
-                .split(",'BranchLocalInfo'")[0]
-                .replace("'s", "s")
-                + "}"
-            )
-
-            location_data = ast.literal_eval(location_data)
-
-            address = (
-                location_data["BranchAddress1"] + " " + location_data["BranchAddress2"]
-            )
-
-            hours = ""
-            for open_key, close_key in hours_key_list:
-                day = open_key[:3]
-                open_time = (
-                    str(location_data[open_key])[:-2]
-                    + ":"
-                    + str(location_data[open_key])[-2:]
-                )
-                end_time = (
-                    str(location_data[close_key])[:-2]
-                    + ":"
-                    + str(location_data[close_key])[-2:]
-                )
-
-                hours = hours + day + " " + open_time + "-" + end_time + ", "
-            hours = hours[:-2]
-
+        state = addr.state
+        if state is None:
             state = "<MISSING>"
-            location_type = "<MISSING>"
 
-            search.found_location_at(latitude, longitude)
+        zipp = addr.postcode
+        if zipp is None:
+            zipp = "<MISSING>"
 
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+        country_code = addr.country
+        if country_code is None:
+            country_code = "<MISSING>"
+
+        city = "<LATER>"
+        store_number = "<LATER>"
+        address = "<LATER>"
+        state = "<LATER>"
+        zipp = "<LATER>"
+        phone = "<LATER>"
+        location_type = "<LATER>"
+        hours = "<LATER>"
+        country_code = "<LATER>"
+
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
 
 def scrape():
@@ -237,14 +126,10 @@ def scrape():
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
         page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
         location_name=sp.MappingField(
-            mapping=["location_name"],
+            mapping=["location_name"], part_of_record_identity=True
         ),
-        latitude=sp.MappingField(
-            mapping=["latitude"],
-        ),
-        longitude=sp.MappingField(
-            mapping=["longitude"],
-        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
         street_address=sp.MultiMappingField(
             mapping=["street_address"], is_required=False
         ),
@@ -272,3 +157,6 @@ def scrape():
 
 
 scrape()
+# https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.carmi_simple_mode%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue%2Cspecs.thunderbolt.SearchBoxModalSuggestions%3Atrue&contentType=application%2Fjson&deviceType=Other&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=0740a8de.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId=ce4f87_9e2b533980984c2c6c6ef1d520238467_454
+# .json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=491&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop
+# https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.carmi_simple_mode%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue%2Cspecs.thunderbolt.SearchBoxModalSuggestions%3Atrue&contentType=application%2Fjson&deviceType=Other&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=0740a8de.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId=ce4f87_512ad2abbafd7308e186081cfb10d55a_481.json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=491&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop
