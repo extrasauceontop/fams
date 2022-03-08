@@ -47,6 +47,7 @@ def get_data():
     for location_id in loc_dict.keys():
         json_page_name = loc_dict[location_id]["pageJsonFileName"]
         page_url = start_of_url + json_page_name + end_of_url
+        store_number = loc_dict[location_id]["pageId"]
 
         response = session.get(page_url).json()
         for key in response["props"]["render"]["compProps"].keys():
@@ -60,7 +61,8 @@ def get_data():
                 continue
         except Exception:
             continue
-        
+        with open("file.txt", "w", encoding="utf-8") as output:
+            json.dump(response, output, indent=4)
         locator_domain = "dunkindonuts.co.nz"
         location_name = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["title"]
         latitude = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["latitude"]
@@ -93,9 +95,12 @@ def get_data():
         if country_code is None:
             country_code = "<MISSING>"
 
-        store_number = "<LATER>"
+        location_type = "<MISSING>"
+        
+        response_text = str(response).lower()
+        phone_area = response_text.split("opening hours")[0].split("html")[-2].split("helvetica")[1]
+        print(phone_area)
         phone = "<LATER>"
-        location_type = "<LATER>"
         hours = "<LATER>"
 
         yield {
