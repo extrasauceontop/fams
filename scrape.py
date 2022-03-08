@@ -103,7 +103,7 @@ def get_data():
                 if sub_key == "html":
                     phone_check = part_check[sub_key]
                     if city.lower() in phone_check.lower():
-                        phone_part = phone_check.replace("\n", "").split("</span>")
+                        phone_part = phone_check.replace("\n", "").split("</span>")[-2]
 
         print(phone_part)
         
