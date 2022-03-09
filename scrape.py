@@ -112,7 +112,7 @@ def get_data():
         hours_text = hours_soup.text.strip()
 
 
-        print(hours_text)
+        print(hours_text.replace("\n", ", "))
         print("")
         
         hours = "<LATER>"
