@@ -98,6 +98,7 @@ def get_data():
 
         location_type = "<MISSING>"
         print(location_name)
+        print(city)
         for key in response["props"]["render"]["compProps"].keys():
             part_check = response["props"]["render"]["compProps"][key]
             for sub_key in part_check.keys():
