@@ -105,7 +105,7 @@ def get_data():
                 if sub_key == "html":
                     phone_check = part_check[sub_key]
                     print(phone_check.replace("\n", ""))
-                    if city.lower() in phone_check.lower():
+                    if city.lower() in phone_check.lower() or '<p class="font_8" style="line-height:1.7em; font-size:17px;"><span style="font-family:arial' in phone_check.lower():
                         phone_part = unescape(phone_check.replace("\n", "").replace("</span></span>", "</span>").split("</span>")[-2].split(">")[-1].strip()).replace("Phone ", "")
 
         print(phone_part)
