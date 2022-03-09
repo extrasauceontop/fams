@@ -3,6 +3,7 @@ import json
 from sgscrape import simple_scraper_pipeline as sp
 from sgpostal.sgpostal import parse_address_intl
 from html import unescape
+from bs4 import BeautifulSoup as bs
 
 
 def extract_json(html_string):
@@ -104,14 +105,16 @@ def get_data():
             for sub_key in part_check.keys():
                 if sub_key == "html":
                     phone_check = part_check[sub_key]
-                    print(phone_check.replace("\n", ""))
                     if city.lower() in phone_check.lower() or '<p class="font_8" style="line-height:1.7em; font-size:17px;"><span style="font-family:arial' in phone_check.lower():
-                        phone_part = unescape(phone_check.replace("\n", "").replace("</span></span>", "</span>").split("</span>")[-2].split(">")[-1].strip()).replace("Phone ", "")
+                        phone = unescape(phone_check.replace("\n", "").replace("</span></span>", "</span>").split("</span>")[-2].split(">")[-1].strip()).replace("Phone ", "")
 
-        print(phone_part)
+        hours_soup = bs(phone_check, "html.parser")
+        hours_text = hours_soup.text.strip()
+
+
+        print(hours_text)
         print("")
         
-        phone = "<LATER>"
         hours = "<LATER>"
 
         yield {
