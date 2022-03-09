@@ -98,8 +98,7 @@ def get_data():
             country_code = "<MISSING>"
 
         location_type = "<MISSING>"
-        print(location_name)
-        print(city)
+
         for key in response["props"]["render"]["compProps"].keys():
             part_check = response["props"]["render"]["compProps"][key]
             for sub_key in part_check.keys():
@@ -112,9 +111,9 @@ def get_data():
         hours_text = hours_soup.text.strip()
 
 
-        print((hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")).strip())
-        print("")
-        
+        hours = (hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")).strip()
+        if "opening hours" in hours.lower():
+            hours = "Temporarily Closed"
         hours = "<LATER>"
 
         yield {
