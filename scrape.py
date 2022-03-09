@@ -97,18 +97,18 @@ def get_data():
             country_code = "<MISSING>"
 
         location_type = "<MISSING>"
-        
+        print(location_name)
         for key in response["props"]["render"]["compProps"].keys():
             part_check = response["props"]["render"]["compProps"][key]
             for sub_key in part_check.keys():
                 if sub_key == "html":
                     phone_check = part_check[sub_key]
+                    print(phone_check.replace("\n", ""))
                     if city.lower() in phone_check.lower():
                         phone_part = unescape(phone_check.replace("\n", "").split("</span>")[-2].split(">")[-1].strip()).replace("Phone ", "")
 
-        print(location_name)
-        print(phone_check)
         print(phone_part)
+        print("")
         
         phone = "<LATER>"
         hours = "<LATER>"
