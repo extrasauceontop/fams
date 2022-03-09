@@ -107,6 +107,7 @@ def get_data():
                         phone_part = unescape(phone_check.replace("\n", "").split("</span>")[-2].split(">")[-1].strip()).replace("Phone ", "")
 
         print(location_name)
+        print(phone_check)
         print(phone_part)
         
         phone = "<LATER>"
