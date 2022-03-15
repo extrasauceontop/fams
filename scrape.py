@@ -137,8 +137,8 @@ def get_data():
 
         print(location_name)
         print(hours)
-        print(hours[-1])
-        print(hours[-2])
+        print(hours[-3])
+        print(hours[-4])
         print("")
         if hours[-1] == ",":
             hours = hours[:-1]
