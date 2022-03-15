@@ -131,9 +131,9 @@ def get_data():
         hours_soup = bs(phone_check, "html.parser")
         hours_text = hours_soup.text.strip()
 
-        hours = ((
+        hours = (
             hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")
-        ).strip() + "hi").replace(", hi", "")
+        ).strip().replace(",  ", "")
 
         print(location_name)
         print(hours)
