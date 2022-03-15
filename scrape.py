@@ -133,9 +133,10 @@ def get_data():
 
         hours = (
             hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")
-        ).strip()
+        ).strip() + "hi"
 
         print(location_name)
+        print(hours)
         print(hours[-1])
         print(hours[-2])
         print("")
