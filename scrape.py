@@ -133,17 +133,10 @@ def get_data():
 
         hours = (
             hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")
-        ).strip().replace(",  ", "")
+        ).strip()
 
-        print(location_name)
-        print(hours)
-        print(hours[-3])
-        print(hours[-4])
-        print("")
-        if hours[-1] == ",":
-            hours = hours[:-1]
-        elif hours[-2] == ",":
-            hours = hours[:-2]
+        if hours[-3] == ",":
+            hours = hours[:-3]
 
         if "opening hours" in hours.lower():
             hours = "Temporarily Closed"
