@@ -38,7 +38,6 @@ def get_data():
     start_of_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.carmi_simple_mode%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue%2Cspecs.thunderbolt.SearchBoxModalSuggestions%3Atrue&contentType=application%2Fjson&deviceType=Other&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=0740a8de.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId="
     end_of_url = ".json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=491&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop"
 
-
     session = SgRequests()
     url = "https://www.dunkindonuts.co.nz/locations"
     response = session.get(url).text
@@ -55,10 +54,12 @@ def get_data():
         for key in response["props"]["render"]["compProps"].keys():
             needed_id = key
             break
-        
+
         try:
             if "CLOSED" not in str(response["props"]["render"]["compProps"]):
-                response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["title"]
+                response["props"]["render"]["compProps"][needed_id]["mapData"][
+                    "locations"
+                ][0]["title"]
             else:
                 continue
         except Exception:
@@ -66,13 +67,21 @@ def get_data():
         with open("file.txt", "w", encoding="utf-8") as output:
             json.dump(response, output, indent=4)
         locator_domain = "dunkindonuts.co.nz"
-        location_name = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["title"]
-        latitude = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["latitude"]
-        longitude = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["longitude"]
-        
-        full_address = response["props"]["render"]["compProps"][needed_id]["mapData"]["locations"][0]["address"]
+        location_name = response["props"]["render"]["compProps"][needed_id]["mapData"][
+            "locations"
+        ][0]["title"]
+        latitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
+            "locations"
+        ][0]["latitude"]
+        longitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
+            "locations"
+        ][0]["longitude"]
+
+        full_address = response["props"]["render"]["compProps"][needed_id]["mapData"][
+            "locations"
+        ][0]["address"]
         addr = parse_address_intl(full_address)
-        
+
         city = addr.city
         if city is None:
             city = "<MISSING>"
@@ -83,7 +92,9 @@ def get_data():
         if address_1 is None and address_2 is None:
             address = "<MISSING>"
         else:
-            address = (str(address_1) + " " + str(address_2)).strip()
+            address = (
+                (str(address_1) + " " + str(address_2)).strip().replace(" None", "")
+            )
 
         state = addr.state
         if state is None:
@@ -104,17 +115,33 @@ def get_data():
             for sub_key in part_check.keys():
                 if sub_key == "html":
                     phone_check = part_check[sub_key]
-                    if city.lower() in phone_check.lower() or '<p class="font_8" style="line-height:1.7em; font-size:17px;"><span style="font-family:arial' in phone_check.lower():
-                        phone = unescape(phone_check.replace("\n", "").replace("</span></span>", "</span>").split("</span>")[-2].split(">")[-1].strip()).replace("Phone ", "")
+                    if (
+                        city.lower() in phone_check.lower()
+                        or '<p class="font_8" style="line-height:1.7em; font-size:17px;"><span style="font-family:arial'
+                        in phone_check.lower()
+                    ):
+                        phone = unescape(
+                            phone_check.replace("\n", "")
+                            .replace("</span></span>", "</span>")
+                            .split("</span>")[-2]
+                            .split(">")[-1]
+                            .strip()
+                        ).replace("Phone ", "")
 
         hours_soup = bs(phone_check, "html.parser")
         hours_text = hours_soup.text.strip()
 
+        hours = (
+            hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")
+        ).strip()
 
-        hours = (hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")).strip()
+        if hours[-1] == ",":
+            hours = hours[:-1]
+        elif hours[-2] == ",":
+            hours = hours[:-2]
+
         if "opening hours" in hours.lower():
             hours = "Temporarily Closed"
-        hours = "<LATER>"
 
         yield {
             "locator_domain": locator_domain,
@@ -170,6 +197,3 @@ def scrape():
 
 
 scrape()
-# https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.carmi_simple_mode%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue%2Cspecs.thunderbolt.SearchBoxModalSuggestions%3Atrue&contentType=application%2Fjson&deviceType=Other&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=0740a8de.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId=ce4f87_9e2b533980984c2c6c6ef1d520238467_454
-# .json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=491&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop
-# https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.carmi_simple_mode%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue%2Cspecs.thunderbolt.SearchBoxModalSuggestions%3Atrue&contentType=application%2Fjson&deviceType=Other&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=0740a8de.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId=ce4f87_512ad2abbafd7308e186081cfb10d55a_481.json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=491&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop
