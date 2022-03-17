@@ -1,162 +1,411 @@
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 from sgrequests import SgRequests
-import json
 from sgscrape import simple_scraper_pipeline as sp
 from sgpostal.sgpostal import parse_address_intl
-from html import unescape
+from sglogging import sglog
+import ssl
+import time
 from bs4 import BeautifulSoup as bs
 
+ssl._create_default_https_context = ssl._create_unverified_context
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
+    "accept-language": "en-US,en;q=0.9,ar;q=0.8",
+}
+log = sglog.SgLogSetup().get_logger(logger_name="carehomes")
 
-def extract_json(html_string):
-    json_objects = []
-    count = 0
 
-    brace_count = 0
-    for element in html_string:
+def get_page_urls():
+    start_url = "https://headquartersoffice.com/page/"
+    x = 0
 
-        if element == "{":
-            brace_count = brace_count + 1
-            if brace_count == 1:
-                start = count
+    final_links = []
+    while True:
+        x = x + 1
+        url = start_url + str(x) + "/?s"
 
-        elif element == "}":
-            brace_count = brace_count - 1
-            if brace_count == 0:
-                end = count
+        try:
+            response = session.get(url, headers=headers).text
+
+        except Exception:
+            log.info(url)
+            break
+        if "looks like nothing was found at this location" in response:
+            break
+
+        soup = bs(response, "html.parser")
+        testings = soup.find_all("h2", attrs={"class": "entry-title"})
+        for test in testings:
+            if (
+                test.find("a").text.strip()[0].isalpha() is False
+                or test.find("a").text.strip()[0] == "("
+            ):
                 try:
-                    if "pagesMap" in html_string[start : end + 1]:
-                        json_objects.append(json.loads(html_string[start : end + 1]))
-                    else:
-                        pass
-                except Exception:
-                    pass
-        count = count + 1
+                    log.info(test.find("a").text.strip())
+                    log.info(test.find("a")["href"])
 
-    return json_objects
+                except Exception:
+                    log.info(test.find("a")["href"])
+
+                log.info("")
+                log.info("")
+
+        links = [
+            h2_tag.find("a")["href"]
+            for h2_tag in soup.find_all("h2", attrs={"class": "entry-title"})
+            if h2_tag.find("a").text.strip()[0].isalpha() is True
+            or h2_tag.find("a").text.strip()[0] == "("
+        ]
+
+        for link in links:
+            final_links.append(link)
+
+    return final_links
+
+
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+
+            driver.get(url)
+
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+
+    driver.maximize_window()
+    return driver
+
+
+def new_map_page(driver):
+    locations = []
+    while True:
+        try:
+            element = driver.find_element_by_class_name(
+                "paginationjs-next.J-paginationjs-next"
+            ).find_element_by_css_selector("a")
+            driver.execute_script("arguments[0].click();", element)
+            time.sleep(2)
+
+        except Exception:
+            break
+
+    test = driver.execute_script(
+        "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
+    )
+
+    responses = []
+    for item in test:
+        if "base64" in item["name"] and "marker-list" in item["name"]:
+            response = session.get(item["name"]).json()
+            responses.append(response)
+
+    for response in responses:
+        for location in response["meta"]:
+            locator_domain = "https://headquartersoffice.com/"
+            page_url = driver.current_url
+            latitude = location["lat"]
+            longitude = location["lng"]
+
+            store_number = location["id"]
+            full_address = location["address"]
+
+            if "+" in full_address:
+                full_address = "".join(
+                    part + " " for part in full_address.split(" ")[1:]
+                )
+
+            if latitude in full_address and longitude in full_address:
+                city = "<MISSING>"
+                address = "<MISSING>"
+                state = "<MISSING>"
+                zipp = "<MISSING>"
+                country_code = "<MISSING>"
+                full_address = "<MISSING>"
+
+            if full_address != "<MISSING>":
+                addr = parse_address_intl(full_address)
+                city = addr.city
+                if city is None:
+                    city = "<MISSING>"
+
+                address_1 = addr.street_address_1
+                address_2 = addr.street_address_2
+
+                if address_1 is None and address_2 is None:
+                    address = "<MISSING>"
+                else:
+                    address = (str(address_1) + " " + str(address_2)).strip()
+
+                state = addr.state
+                if state is None:
+                    state = "<MISSING>"
+
+                zipp = addr.postcode
+                if zipp is None:
+                    zipp = "<MISSING>"
+
+                country_code = addr.country
+                if country_code is None:
+                    country_code = "<MISSING>"
+
+            phone = "<MISSING>"
+
+            if page_url[-1] == "/":
+                page_url = page_url[:-1]
+            location_type = page_url.split("/")[-1]
+            hours = "<MISSING>"
+            location_name = location_type.replace("-", " ")
+            locations.append(
+                {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                }
+            )
+
+    return locations
+
+
+def old_map_page(driver):
+    locations = []
+    test = driver.execute_script(
+        "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
+    )
+    for item in test:
+        if "base64" in item["name"]:
+
+            session = SgRequests()
+            url = item["name"]
+            try:
+                response = session.get(url).json()
+
+            except Exception:
+                continue
+
+            if "markers" in response.keys():
+                break
+
+    try:
+        if response is None:
+            log.info(driver.current_url)
+            raise Exception
+
+    except Exception:
+        log.info(driver.current_url)
+        raise Exception
+    for location in response["markers"]:
+        locator_domain = "https://headquartersoffice.com/"
+        page_url = driver.current_url
+        location_name = location["title"]
+        latitude = location["lat"]
+        longitude = location["lng"]
+        store_number = location["id"]
+
+        phone = "<MISSING>"
+        for field in location["custom_field_data"]:
+            if "phone" in field["name"].lower():
+                phone = field["value"].replace("+", "")
+
+        if page_url[-1] == "/":
+            page_url = page_url[:-1]
+        location_type = page_url.split("/")[-1]
+        hours = "<MISSING>"
+
+        full_address = "lost"
+        for field in location["custom_field_data"]:
+            if "address" in field["name"].lower():
+                full_address = field["value"].replace("+", "")
+
+        if full_address == "lost":
+            full_address = location["address"]
+
+        if "+" in full_address.split(" ")[0]:
+            full_address = "".join(part + " " for part in full_address.split(" ")[1:])
+
+        if full_address != "lost":
+            addr = parse_address_intl(full_address)
+            city = addr.city
+            if city is None:
+                city = "<MISSING>"
+
+            address_1 = addr.street_address_1
+            address_2 = addr.street_address_2
+
+            if address_1 is None and address_2 is None:
+                address = "<MISSING>"
+            else:
+                address = (str(address_1) + " " + str(address_2)).strip()
+
+            state = addr.state
+            if state is None:
+                state = "<MISSING>"
+
+            zipp = addr.postcode
+            if zipp is None:
+                zipp = "<MISSING>"
+
+            country_code = addr.country
+            if country_code is None:
+                country_code = "<MISSING>"
+
+        else:
+            city = "<MISSING>"
+            address = "<MISSING>"
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "<MISSING>"
+
+        locations.append(
+            {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
+        )
+
+    return locations
 
 
 def get_data():
-    start_of_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.carmi_simple_mode%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue%2Cspecs.thunderbolt.SearchBoxModalSuggestions%3Atrue&contentType=application%2Fjson&deviceType=Other&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=0740a8de.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId="
-    end_of_url = ".json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=491&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop"
+    page_urls = get_page_urls()
+    x = 0
+    y = 0
+    for page_url in page_urls:
+        if page_url == page_urls[0]:
+            driver = get_driver(page_url, "inside-page-hero")
 
-    session = SgRequests()
-    url = "https://www.dunkindonuts.co.nz/locations"
-    response = session.get(url).text
-
-    json_objects = extract_json(response)
-    loc_dict = json_objects[0]["siteFeaturesConfigs"]["router"]["pagesMap"]
-
-    for location_id in loc_dict.keys():
-        json_page_name = loc_dict[location_id]["pageJsonFileName"]
-        page_url = start_of_url + json_page_name + end_of_url
-        store_number = loc_dict[location_id]["pageId"]
-
-        response = session.get(page_url).json()
-        for key in response["props"]["render"]["compProps"].keys():
-            needed_id = key
-            break
-
-        try:
-            if "CLOSED" not in str(response["props"]["render"]["compProps"]):
-                response["props"]["render"]["compProps"][needed_id]["mapData"][
-                    "locations"
-                ][0]["title"]
-            else:
-                continue
-        except Exception:
-            continue
-        with open("file.txt", "w", encoding="utf-8") as output:
-            json.dump(response, output, indent=4)
-        locator_domain = "dunkindonuts.co.nz"
-        location_name = response["props"]["render"]["compProps"][needed_id]["mapData"][
-            "locations"
-        ][0]["title"]
-        latitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
-            "locations"
-        ][0]["latitude"]
-        longitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
-            "locations"
-        ][0]["longitude"]
-
-        full_address = response["props"]["render"]["compProps"][needed_id]["mapData"][
-            "locations"
-        ][0]["address"]
-        addr = parse_address_intl(full_address)
-
-        city = addr.city
-        if city is None:
-            city = "<MISSING>"
-
-        address_1 = addr.street_address_1
-        address_2 = addr.street_address_2
-
-        if address_1 is None and address_2 is None:
-            address = "<MISSING>"
         else:
-            address = (
-                (str(address_1) + " " + str(address_2)).strip().replace(" None", "")
-            )
+            try:
+                driver.get(page_url)
 
-        state = addr.state
-        if state is None:
-            state = "<MISSING>"
+            except Exception:
+                driver = get_driver(page_url, "inside-page-hero", driver=driver)
 
-        zipp = addr.postcode
-        if zipp is None:
-            zipp = "<MISSING>"
+        response = driver.page_source
+        soup = bs(response, "html.parser")
 
-        country_code = addr.country
-        if country_code is None:
+        map_object = soup.find("div", attrs={"class": "wpgmza_map"})
+        if map_object is None:
+            if (
+                page_url == "https://headquartersoffice.com/privacy/"
+                or page_url == "https://headquartersoffice.com/"
+                or "?" in soup.find("h1").text.strip()
+            ):
+                continue
+
+            locator_domain = "headquartersoffice.com"
+            location_name = soup.find("h1").text.strip()
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            city = "<INACCESSIBLE"
+            store_number = "<MISSING>"
+            address = "<INACCESSIBLE>"
+            state = "<INACCESSIBLE>"
+            zipp = "<INACCESSIBLE>"
+            phone = "<INACCESSIBLE>"
+            location_type = "<INACCESSIBLE>"
+            hours = "<MISSING>"
             country_code = "<MISSING>"
 
-        location_type = "<MISSING>"
+            yield {
+                "locator_domain": locator_domain,
+                "page_url": page_url,
+                "location_name": location_name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "city": city,
+                "store_number": store_number,
+                "street_address": address,
+                "state": state,
+                "zip": zipp,
+                "phone": phone,
+                "location_type": location_type,
+                "hours": hours,
+                "country_code": country_code,
+            }
 
-        for key in response["props"]["render"]["compProps"].keys():
-            part_check = response["props"]["render"]["compProps"][key]
-            for sub_key in part_check.keys():
-                if sub_key == "html":
-                    phone_check = part_check[sub_key]
-                    if (
-                        city.lower() in phone_check.lower()
-                        or '<p class="font_8" style="line-height:1.7em; font-size:17px;"><span style="font-family:arial'
-                        in phone_check.lower()
-                    ):
-                        phone = unescape(
-                            phone_check.replace("\n", "")
-                            .replace("</span></span>", "</span>")
-                            .split("</span>")[-2]
-                            .split(">")[-1]
-                            .strip()
-                        ).replace("Phone ", "")
+        else:
+            time.sleep(1)
+            test = driver.execute_script(
+                "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
+            )
 
-        hours_soup = bs(phone_check, "html.parser")
-        hours_text = hours_soup.text.strip()
+            found = 0
+            for item in test:
+                if "base64" in item["name"] and "marker-list" in item["name"]:
+                    x = x + 1
+                    locations = new_map_page(driver)
+                    found = 1
+                    if len(locations) == 0:
+                        log.info("")
+                        log.info("new map")
+                        log.info(driver.current_url)
+                    for loc in locations:
+                        yield loc
 
-        hours = (
-            hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")
-        ).strip()
+                    break
 
-        if hours[-3] == ",":
-            hours = hours[:-3]
+            if found == 0:
+                locations = old_map_page(driver)
+                if len(locations) == 0:
+                    log.info("")
+                    log.info("old map")
+                    log.info(driver.current_url)
+                for loc in locations:
+                    yield loc
+                y = y + 1
 
-        if "opening hours" in hours.lower():
-            hours = "Temporarily Closed"
-
-        yield {
-            "locator_domain": locator_domain,
-            "page_url": page_url,
-            "location_name": location_name,
-            "latitude": latitude,
-            "longitude": longitude,
-            "city": city,
-            "store_number": store_number,
-            "street_address": address,
-            "state": state,
-            "zip": zipp,
-            "phone": phone,
-            "location_type": location_type,
-            "hours": hours,
-            "country_code": country_code,
-        }
+    log.info(x)
+    log.info(y)
 
 
 def scrape():
