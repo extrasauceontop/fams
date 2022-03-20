@@ -1,1 +1,3 @@
+--extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 camelot-py[cv]==0.10.1
+sgrequests==0.2.6
