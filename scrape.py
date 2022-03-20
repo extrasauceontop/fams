@@ -1,5 +1,8 @@
 import camelot
 from sgrequests import SgRequests
+import os
+
+os.system("pip install ghostscript python3-tk")
 
 session = SgRequests()
 pdf_url = "https://www.bbva.pe/content/dam/public-web/peru/documents/personas/canales-de-atencion/oficinas/Oficinas-BBVA-abiertas-23.10.20.pdf"
