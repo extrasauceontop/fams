@@ -1,3 +1,6 @@
 --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
-camelot-py[cv]==0.10.1
-sgrequests==0.2.6
+selenium==3.141.0
+sgselenium==0.1.5
+lxml==4.6.2
+sgscrape==0.2.6
+sgvalidator==0.0.71
