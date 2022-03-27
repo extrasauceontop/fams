@@ -1,183 +1,118 @@
-from dataclasses import dataclass
-import tabula
-from sgscrape import simple_scraper_pipeline as sp
-from sgrequests import SgRequests
-import PyPDF2  # noqa
+from typing import Iterable, Tuple, Callable
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton
+from sgrequests.sgrequests import SgRequests
+from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
 
-def get_data():
-    x = -1
-    while True:
-        x = x+1
-        session = SgRequests()
-        pdf_url = "https://www.bbva.pe/content/dam/public-web/peru/documents/personas/canales-de-atencion/oficinas/Oficinas-BBVA-abiertas-23.10.20.pdf"
-        pdf_response = session.get(pdf_url)
-        my_raw_data = pdf_response.content
+def record_transformer(poi):
+    domain = "zara.com"
+    street_address = poi["addressLines"][0]
+    location_name = poi.get("name")
+    if not location_name:
+        location_name = street_address
+    city = poi["city"]
+    city = city if city else ""
+    state = poi.get("state")
+    state = state if state else ""
+    if state == "--":
+        state = SgRecord.MISSING
+    if state.isdigit():
+        state = ""
+    zip_code = poi["zipCode"]
+    zip_code = zip_code if zip_code else ""
+    if zip_code and str(zip_code.strip()) == "0":
+        zip_code = ""
+    country_code = poi["countryCode"]
+    store_number = poi["id"]
+    phone = poi["phones"]
+    phone = phone[0] if phone else ""
+    if phone == "--":
+        phone = SgRecord.MISSING
+    location_type = poi["datatype"]
+    latitude = poi["latitude"]
+    latitude = latitude if latitude else ""
+    longitude = poi["longitude"]
+    longitude = longitude if longitude else ""
 
-        with open("my_pdf.pdf", "wb") as my_data:
-            my_data.write(my_raw_data)
-        
-        open_pdf_file = open("my_pdf.pdf", "rb")
-        read_pdf = PyPDF2.PdfFileReader(open_pdf_file)
-
-        try:
-            final_text = ((read_pdf.getPage(x).extractText()))
-        except Exception:
-            return
-        begin_hours = 0
-        hours = ""
-        for line in final_text.split("\n"):
-            if begin_hours == 1:
-                hours = hours + line + ", "
-
-            if " mayor parte de nuestra red de oficinas" in line:
-                begin_hours = 1
-        hours = hours.strip()[:-3]
-
-        df = tabula.read_pdf("my_pdf.pdf", pages='all')[x]
-        df = df.fillna("0")
-
-        master_list = df.values.tolist()
-
-        tot_with_0 = 0
-        for row in master_list:
-            if "0" in row and len(row) == 5:
-                tot_with_0 = tot_with_0 + 1
-        print(len(master_list))
-        print(tot_with_0)
-
-        if len(master_list) == tot_with_0:
-            index_0 = True
-            index_1 = True
-            index_2 = True
-            index_3 = True
-            index_4 = True
-            for row in master_list:
-                if row[0] != "0":
-                    index_0 = False
-                
-                if row[1] != "0":
-                    index_1 = False
-                
-                if row[2] != "0":
-                    index_2 = False
-                
-                if row[3] != "0":
-                    index_3 = False
-                
-                if row[4] != "0":
-                    index_4 = False
-                
-            if index_0 == True:
-                bad_index = 0
-
-            if index_1 == True:
-                bad_index = 1
-
-            if index_2 == True:
-                bad_index = 2
-
-            if index_3 == True:
-                bad_index = 3
-
-            if index_4 == True:
-                bad_index = 4
-            
-            list_to_iter = []
-            for row in master_list:
-                list_to_iter.append(row[:bad_index] + row[bad_index+1:])
-
-        else:
-            list_to_iter = master_list
-            
-        index = 0
-        no_scrape = -1
-        final_list = []
-        for row in list_to_iter:
-            if no_scrape >= index:
-                pass
-
-            elif "0" in row:
-                print(row)
-                print(x)
-                cell_1 = (list_to_iter[index][0] + list_to_iter[index+1][0] + list_to_iter[index+2][0]).replace("0", "").strip()
-                cell_2 = (list_to_iter[index][1] + list_to_iter[index+1][1] + list_to_iter[index+2][1]).replace("0", "").strip()
-                cell_3 = (list_to_iter[index][2] + list_to_iter[index+1][2] + list_to_iter[index+2][2]).replace("0", "").strip()
-                cell_4 = (list_to_iter[index][3] + list_to_iter[index+1][3] + list_to_iter[index+2][3]).replace("0", "").strip()
-                
-                final_list.append([cell_1, cell_2, cell_3, cell_4])
-                no_scrape = index+2
-            elif "0" not in row:
-                final_list.append(row)
-            
-            index = index + 1
-
-        for row in final_list:
-            locator_domain = "bbva.pe"
-            page_url = "https://www.bbva.pe/content/dam/public-web/peru/documents/personas/canales-de-atencion/oficinas/Oficinas-BBVA-abiertas-23.10.20.pdf"
-            location_name = row[0]
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            city = row[2]
-            store_number = "<MISSING>"
-            address = row[1]
-            state = row[3]
-            zipp = "<MISSING>"
-            phone = "<MISSING>"
-            location_type = "office"
-            country_code = "Peru"
-
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+    item = SgRecord(
+        locator_domain=domain,
+        page_url=SgRecord.MISSING,
+        location_name=location_name,
+        street_address=street_address,
+        city=city,
+        state=state,
+        zip_postal=zip_code,
+        country_code=country_code,
+        store_number=store_number,
+        phone=phone,
+        location_type=location_type,
+        latitude=latitude,
+        longitude=longitude,
+        hours_of_operation=SgRecord.MISSING,
+    )
+    return (item, latitude, longitude)
 
 
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.MappingField(mapping=["locator_domain"]),
-        page_url=sp.MappingField(mapping=["page_url"], is_required=False),
-        location_name=sp.MappingField(
-            mapping=["location_name"], part_of_record_identity=True
-        ),
-        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
-        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
-        street_address=sp.MultiMappingField(
-            mapping=["street_address"], part_of_record_identity=True
-        ),
-        city=sp.MappingField(
-            mapping=["city"], is_required=False
-        ),
-        state=sp.MappingField(mapping=["state"], is_required=False),
-        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
-        country_code=sp.MappingField(mapping=["country_code"], is_required=False),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(
-            mapping=["store_number"], is_required=False
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+class ExampleSearchIteration(SearchIteration):
+    def __init__(self, http: SgRequests):
+        self.__http = http  # noqa
+        self.__state = CrawlStateSingleton.get_instance()  # noqa
+
+    def do(
+        self,
+        coord: Tuple[float, float],
+        zipcode: str,  # noqa
+        current_country: str,
+        items_remaining: int,  # noqa
+        found_location_at: Callable[[float, float], None],
+    ) -> Iterable[SgRecord]:
+
+        hdr = {
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+        }
+
+        def getPoint(session, hdr):
+            url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
+                current_country, coord[0], coord[1]
+            )
+            data = session.get(url, headers=hdr)
+            try:
+                return data.json()
+            except Exception:
+                return []
+
+        found = 0
+        for poi in getPoint(http, hdr):
+            record, foundLat, foundLng = record_transformer(poi)
+            found_location_at(foundLat, foundLng)
+            found += 1
+            yield record
+
+
+if __name__ == "__main__":
+    search_maker = DynamicSearchMaker(
+        search_type="DynamicGeoSearch", granularity=Grain_8()
     )
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="Crawler",
-        data_fetcher=get_data,
-        field_definitions=field_defs,
-        log_stats_interval=15,
-    )
-    pipeline.run()
+    with SgWriter(
+        deduper=SgRecordDeduper(
+            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+        )
+    ) as writer:
+        with SgRequests(dont_retry_status_codes=[403, 429, 500, 502, 404]) as http:
+            search_iter = ExampleSearchIteration(http=http)
+            par_search = ParallelDynamicSearch(
+                search_maker=search_maker,
+                search_iteration=search_iter,
+                country_codes=SearchableCountries.ALL,
+            )
 
+            for rec in par_search.run():
+                writer.write_row(rec)
 
-scrape()
+    state = CrawlStateSingleton.get_instance()
