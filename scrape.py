@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_8
+from sgzip.dynamic import SearchableCountries, Grain_2
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 
 
@@ -96,7 +96,7 @@ class ExampleSearchIteration(SearchIteration):
 
 if __name__ == "__main__":
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_8()
+        search_type="DynamicGeoSearch", granularity=Grain_2()
     )
 
     with SgWriter(
