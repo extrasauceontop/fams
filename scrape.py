@@ -6,6 +6,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgpostal import parse_address, International_Parser
+from bs4 import BeautifulSoup as bs
 
 
 def get_international(line):
@@ -38,37 +39,24 @@ def get_tree(url):
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
     r = session.get(url, headers=headers)
-    return html.fromstring(r.text)
+    return r.text
 
 
 def get_additional(page_url):
-    print("here")
-    tree = get_tree(page_url)
     print(page_url)
-    phone = "".join(tree.xpath("//div[@class='store-phone store-txt']/text()"))
-    phone = (
-        phone.replace("Phone", "")
-        .replace("Tel", "")
-        .replace("ef", "")
-        .replace("f", "")
-        .replace(".", "")
-        .replace(":", "")
-        .strip()
-    )
-    text = "".join(tree.xpath("//iframe/@src"))
-    lat, lng = get_coords_from_embed(text)
-    hoo = (
-        ";".join(tree.xpath("//div[@class='store-time store-txt']//text()"))
-        .replace("â", "-")
-        .strip()
-    )
-    print(hoo)
-    print("")
+    response = get_tree(page_url)
+    soup = bs(response, "html.parser")
+
+    phone = "<LATER>"
+    lat = "<LATER>"
+    lng = "<LATER>"
+    hoo = "<LATER>"
     return phone, lat, lng, hoo
 
 
 def fetch_data(sgw: SgWriter):
     tree = get_tree("https://www.munichsports.com/en/munich-stores")
+    tree = html.fromstring(tree)
     divs = tree.xpath("//div[@class='shop-info']")
     for d in divs:
         location_name = "".join(d.xpath(".//span[@class='store']/text()")).strip()
