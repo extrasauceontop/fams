@@ -44,11 +44,14 @@ def get_tree(url):
 
 
 def get_additional(page_url):
-    print(page_url)
-    response = get_tree(page_url)
-    soup = bs(response, "html.parser")
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
 
-    hours = soup.find("div", attrs={"class": "store-time store-txt"}).text.split()
+    response = session.get(page_url, headers=headers).text
+    soup = bs(response, "html.parser")
+    
+    hours = soup.find("div", attrs={"class": "store-time store-txt"}).text.strip()
     print(hours)
 
     phone = "<LATER>"
