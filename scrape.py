@@ -1,118 +1,114 @@
-from typing import Iterable, Tuple, Callable
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
+import re
+from lxml import html
 from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import CrawlStateSingleton
-from sgrequests.sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_2
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgpostal import parse_address, International_Parser
 
 
-def record_transformer(poi):
-    domain = "zara.com"
-    street_address = poi["addressLines"][0]
-    location_name = poi.get("name")
-    if not location_name:
-        location_name = street_address
-    city = poi["city"]
-    city = city if city else ""
-    state = poi.get("state")
-    state = state if state else ""
-    if state == "--":
-        state = SgRecord.MISSING
-    if state.isdigit():
-        state = ""
-    zip_code = poi["zipCode"]
-    zip_code = zip_code if zip_code else ""
-    if zip_code and str(zip_code.strip()) == "0":
-        zip_code = ""
-    country_code = poi["countryCode"]
-    store_number = poi["id"]
-    phone = poi["phones"]
-    phone = phone[0] if phone else ""
-    if phone == "--":
-        phone = SgRecord.MISSING
-    location_type = poi["datatype"]
-    latitude = poi["latitude"]
-    latitude = latitude if latitude else ""
-    longitude = poi["longitude"]
-    longitude = longitude if longitude else ""
+def get_international(line):
+    post = re.findall(r"\d{5}", line)
+    if post:
+        adr = parse_address(International_Parser(), line, postcode=post.pop())
+    else:
+        adr = parse_address(International_Parser(), line)
 
-    item = SgRecord(
-        locator_domain=domain,
-        page_url=SgRecord.MISSING,
-        location_name=location_name,
-        street_address=street_address,
-        city=city,
-        state=state,
-        zip_postal=zip_code,
-        country_code=country_code,
-        store_number=store_number,
-        phone=phone,
-        location_type=location_type,
-        latitude=latitude,
-        longitude=longitude,
-        hours_of_operation=SgRecord.MISSING,
+    adr1 = adr.street_address_1 or ""
+    adr2 = adr.street_address_2 or ""
+    street = f"{adr1} {adr2}".strip()
+    postal = adr.postcode or SgRecord.MISSING
+
+    return street, postal
+
+
+def get_coords_from_embed(text):
+    try:
+        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
+        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
+    except IndexError:
+        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
+
+    return latitude, longitude
+
+
+def get_tree(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
+    }
+    r = session.get(url, headers=headers)
+    return html.fromstring(r.text)
+
+
+def get_additional(page_url):
+    tree = get_tree(page_url)
+    phone = "".join(tree.xpath("//div[@class='store-phone store-txt']/text()"))
+    phone = (
+        phone.replace("Phone", "")
+        .replace("Tel", "")
+        .replace("ef", "")
+        .replace("f", "")
+        .replace(".", "")
+        .replace(":", "")
+        .strip()
     )
-    return (item, latitude, longitude)
+    text = "".join(tree.xpath("//iframe/@src"))
+    lat, lng = get_coords_from_embed(text)
+    hoo = (
+        ";".join(tree.xpath("//div[@class='store-time store-txt']//text()"))
+        .replace("â", "-")
+        .strip()
+    )
+
+    return phone, lat, lng, hoo
 
 
-class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self.__http = http  # noqa
-        self.__state = CrawlStateSingleton.get_instance()  # noqa
+def fetch_data(sgw: SgWriter):
+    tree = get_tree("https://www.munichsports.com/en/munich-stores")
+    divs = tree.xpath("//div[@class='shop-info']")
+    for d in divs:
+        location_name = "".join(d.xpath(".//span[@class='store']/text()")).strip()
+        city = "".join(d.xpath(".//span[@class='city']/text()")).strip()
+        slug = "".join(d.xpath(".//div[@class='shop-name']/a/@href"))
+        page_url = f"https://www.munichsports.com{slug}"
+        line = d.xpath(
+            ".//div[@class='shop-address']/text()|.//div[@class='shop-address']/div/text()"
+        )
+        line = list(filter(None, [li.strip() for li in line]))
+        raw_address = " ".join(line).upper().replace(location_name, "").strip()
+        if "OUTLETS" in raw_address:
+            raw_address = raw_address.split("OUTLETS")[1].strip()
+        if "OUTLET" in raw_address:
+            raw_address = raw_address.split("OUTLET")[1].strip()
+        if raw_address.startswith("C.C.") or raw_address.startswith("CC"):
+            raw_address = ",".join(raw_address.split(",")[1:]).strip()
+        if raw_address.startswith("-") or raw_address.startswith(","):
+            raw_address = raw_address[1:].strip()
 
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,  # noqa
-        current_country: str,
-        items_remaining: int,  # noqa
-        found_location_at: Callable[[float, float], None],
-    ) -> Iterable[SgRecord]:
+        street_address, postal = get_international(raw_address)
+        phone, latitude, longitude, hours_of_operation = get_additional(page_url)
 
-        hdr = {
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
-        }
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            zip_postal=postal,
+            country_code="ES",
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
 
-        def getPoint(session, hdr):
-            url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=true&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
-                current_country, coord[0], coord[1]
-            )
-            data = session.get(url, headers=hdr)
-            try:
-                return data.json()
-            except Exception:
-                return []
-
-        found = 0
-        for poi in getPoint(http, hdr):
-            record, foundLat, foundLng = record_transformer(poi)
-            found_location_at(foundLat, foundLng)
-            found += 1
-            yield record
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_2()
-    )
-
-    with SgWriter(
-        deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
-        )
-    ) as writer:
-        with SgRequests(dont_retry_status_codes=[403, 429, 500, 502, 404]) as http:
-            search_iter = ExampleSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=SearchableCountries.ALL,
-            )
-
-            for rec in par_search.run():
-                writer.write_row(rec)
-
-    state = CrawlStateSingleton.get_instance()
+    locator_domain = "https://www.munichsports.com/"
+    session = SgRequests()
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        fetch_data(writer)
