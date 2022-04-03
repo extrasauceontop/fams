@@ -69,6 +69,7 @@ def fetch_data(sgw: SgWriter):
     tree = get_tree("https://www.munichsports.com/en/munich-stores")
     tree = html.fromstring(tree)
     divs = tree.xpath("//div[@class='shop-info']")
+    print(len(divs))
     for d in divs:
         location_name = "".join(d.xpath(".//span[@class='store']/text()")).strip()
         city = "".join(d.xpath(".//span[@class='city']/text()")).strip()
