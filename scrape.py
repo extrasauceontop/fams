@@ -39,6 +39,7 @@ def get_tree(url):
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
     r = session.get(url, headers=headers)
+    print(r.status_code)
     return r.text
 
 
