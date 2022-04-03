@@ -44,6 +44,7 @@ def get_tree(url):
 def get_additional(page_url):
     print("here")
     tree = get_tree(page_url)
+    print(tree)
     phone = "".join(tree.xpath("//div[@class='store-phone store-txt']/text()"))
     phone = (
         phone.replace("Phone", "")
