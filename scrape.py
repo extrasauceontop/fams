@@ -61,7 +61,8 @@ def get_additional(page_url):
         .replace("â", "-")
         .strip()
     )
-    print("there")
+    print(hoo)
+    print("")
     return phone, lat, lng, hoo
 
 
