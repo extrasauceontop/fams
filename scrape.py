@@ -47,6 +47,9 @@ def get_additional(page_url):
     response = get_tree(page_url)
     soup = bs(response, "html.parser")
 
+    hours = soup.find("div", attrs={"class": "store-time store-txt"}).text.split()
+    print(hours)
+
     phone = "<LATER>"
     lat = "<LATER>"
     lng = "<LATER>"

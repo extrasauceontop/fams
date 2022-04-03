@@ -3,3 +3,4 @@ sgscrape==0.2.6
 sgrequests==0.2.10
 lxml==4.6.5
 sgpostal==0.1
+beautifulsoup4==4.9.3
