@@ -49,10 +49,13 @@ def get_additional(page_url):
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
     }
 
-    response = session.get(page_url, headers=headers).text
+    response_stuff = session.get(page_url, headers=headers)
+    print(response_stuff.status_code)
+    response = response_stuff.text
     soup = bs(response, "html.parser")
     
     hours = soup.find("div", attrs={"class": "store-time store-txt"}).text.strip()
+    
     print(hours)
 
     phone = "<LATER>"
