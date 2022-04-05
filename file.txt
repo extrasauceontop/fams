@@ -1,0 +1,247 @@
+{
+    "structure": {
+        "components": {
+            "comp-j78bnu7n": {
+                "componentType": "GoogleMap",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu7r": {
+                "componentType": "PopupCloseIconButton",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu8a": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu7w": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu82": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu85": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu87": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "aqvji": {
+                "components": [
+                    "comp-j78bnu7g"
+                ],
+                "componentType": "PopupPage",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu7g": {
+                "components": [
+                    "Containercomp-j78bnu7g"
+                ],
+                "componentType": "PopupContainer",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu7u": {
+                "components": [
+                    "comp-j78bnu8a",
+                    "comp-j78bnu7w",
+                    "comp-j78bnu82",
+                    "comp-j78bnu85",
+                    "comp-j78bnu87"
+                ],
+                "componentType": "Container",
+                "uiType": "RectangleArea",
+                "pageId": "aqvji"
+            },
+            "Containercomp-j78bnu7g": {
+                "components": [
+                    "comp-j78bnu7u",
+                    "comp-j78bnu7n",
+                    "comp-j78bnu7r"
+                ],
+                "componentType": "Group",
+                "pageId": "aqvji"
+            }
+        },
+        "features": [
+            "animations",
+            "clickHandlerRegistrar",
+            "components",
+            "popups",
+            "renderer",
+            "reporter",
+            "screenIn",
+            "scrollToAnchor",
+            "windowScroll"
+        ],
+        "siteFeaturesConfigs": null
+    },
+    "props": {
+        "render": {
+            "compProps": {
+                "comp-j78bnu7n": {
+                    "id": "comp-j78bnu7n",
+                    "urlQueries": "defaultLocation=0&showZoom=true&showStreetView=true&showMapType=true&language=en&id=dataItem-j78bnu7o",
+                    "mapData": {
+                        "mapInteractive": true,
+                        "showZoom": true,
+                        "showStreetView": true,
+                        "showMapType": true,
+                        "mapType": "ROADMAP",
+                        "mapStyle": "[]",
+                        "locations": [
+                            {
+                                "address": "175 Queen St, Auckland, 1010, New Zealand",
+                                "latitude": -36.8479925,
+                                "longitude": 174.7653682,
+                                "title": "Queen St",
+                                "description": "",
+                                "linkTitle": "",
+                                "pinIcon": "https://static.parastorage.com/services/santa-resources/resources/editor/designPanel/panelTypes/default_pin_icon.png",
+                                "pinColor": "",
+                                "locationLinkAttributes": {}
+                            }
+                        ],
+                        "defaultLocation": 0,
+                        "zoom": 14
+                    },
+                    "skin": "GoogleMapSkin"
+                },
+                "comp-j78bnu7r": {
+                    "svgContent": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"25.975 25.975 148.05 148.05\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"25.975 25.975 148.05 148.05\" role=presentation aria-hidden=true>\n    <g>\n        <path d=\"M172.9 167.6L105.3 100l67.6-67.6c1.5-1.5 1.5-3.8 0-5.3s-3.8-1.5-5.3 0L100 94.7 32.4 27.1c-1.5-1.5-3.8-1.5-5.3 0s-1.5 3.8 0 5.3L94.7 100l-67.6 67.6c-1.5 1.5-1.5 3.8 0 5.3s3.8 1.5 5.3 0l67.6-67.6 67.6 67.6c1.5 1.5 3.8 1.5 5.3 0s1.5-3.8 0-5.3z\"/>\n    </g>\n</svg>\n"
+                },
+                "comp-j78bnu8a": {
+                    "html": "<h5 class=\"font_5\" style=\"font-size:28px; text-align:center;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"font-size:28px;\"><span style=\"font-weight:bold;\"><span style=\"letter-spacing:0.05em;\">Queen St</span></span></span></span></h5>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "comp-j78bnu7w": {
+                    "html": "<h6 class=\"font_6\" style=\"font-size:22px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"letter-spacing:0.1em;\">Address</span></span></h6>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "comp-j78bnu82": {
+                    "html": "<p class=\"font_8\" style=\"line-height:1.7em; font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\">175 Queen St, Auckland, 1010</span></p>\n\n<p class=\"font_8\" style=\"line-height:1.7em; font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><a data-auto-recognition=\"true\" href=\"mailto:queenst@cafeconcepts.co.nz\">queenst@cafeconcepts.co.nz</a> </span></p>\n\n<p class=\"font_8\" style=\"line-height:1.7em; font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\">09 368 4286</span></p>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "comp-j78bnu85": {
+                    "html": "<h6 class=\"font_6\" style=\"font-size:22px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"letter-spacing:0.1em;\">Opening Hours</span></span></h6>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "comp-j78bnu87": {
+                    "html": "<h6 class=\"font_6\" style=\"font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"font-size:17px;\">Monday - Saturday 7:00am - 10:00pm</span></span></h6>\n\n<h6 class=\"font_6\" style=\"font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"font-size:17px;\">Sunday 7am - 9pm</span></span></h6>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "aqvji": {
+                    "fillLayers": {
+                        "containerId": "aqvji",
+                        "hasBgFullscreenScrollEffect": false,
+                        "shouldRenderUnderlay": true,
+                        "shouldPadMedia": false
+                    }
+                },
+                "comp-j78bnu7g": {
+                    "fillLayers": {
+                        "containerId": "comp-j78bnu7g",
+                        "hasBgFullscreenScrollEffect": false,
+                        "shouldRenderUnderlay": true,
+                        "image": {
+                            "uri": "f0d903_5852e9e4a1ad486d8a27de7391310142~mv2.jpg",
+                            "alt": "",
+                            "width": 792,
+                            "height": 594,
+                            "title": "63_R1563BulkDonutsHV_0564_lf_Lo.jpg",
+                            "containerId": "comp-j78bnu7g",
+                            "hasBgScrollEffect": "",
+                            "bgEffectName": "",
+                            "alignType": "center",
+                            "displayMode": "fill",
+                            "link": {},
+                            "containerWidth": 908,
+                            "containerHeight": 539
+                        },
+                        "shouldPadMedia": false
+                    }
+                },
+                "comp-j78bnu7u": {
+                    "wedges": [],
+                    "rotatedComponents": [],
+                    "meshProps": {
+                        "wedges": [],
+                        "rotatedComponents": [],
+                        "fixedComponents": []
+                    }
+                },
+                "Containercomp-j78bnu7g": {
+                    "meshProps": {
+                        "wedges": [],
+                        "rotatedComponents": [],
+                        "fixedComponents": []
+                    }
+                }
+            }
+        },
+        "__componentsConfig__": {},
+        "components": {},
+        "popups": {
+            "closeSiteButtons": {},
+            "popupsWithCloseOnOverlayClick": {
+                "aqvji": true
+            }
+        },
+        "screenIn": {
+            "compIdToActions": {
+                "comp-j78bnu7g": [
+                    {
+                        "name": "FadeIn",
+                        "delay": 0.2,
+                        "duration": 0.75,
+                        "action": "screenIn",
+                        "targetId": "comp-j78bnu7g",
+                        "params": {
+                            "doubleDelayFixed": true
+                        },
+                        "viewMode": "desktop",
+                        "persistOnNav": false,
+                        "pageId": "aqvji"
+                    }
+                ]
+            },
+            "compIdToRotations": {
+                "comp-j78bnu7g": 0
+            }
+        },
+        "scrollToAnchor": {
+            "anchorDataIdToCompIdMap": {},
+            "nicknameToCompIdMap": {
+                "googleMaps1": "comp-j78bnu7n",
+                "button1": "comp-j78bnu7r",
+                "text1": "comp-j78bnu8a",
+                "text5": "comp-j78bnu7w",
+                "text4": "comp-j78bnu82",
+                "text3": "comp-j78bnu85",
+                "text2": "comp-j78bnu87",
+                "page1": "aqvji",
+                "lightbox1": "comp-j78bnu7g",
+                "box1": "comp-j78bnu7u"
+            },
+            "compsToUpdate": []
+        }
+    },
+    "stateRefs": {}
+}

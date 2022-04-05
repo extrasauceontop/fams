@@ -1,7 +1,7 @@
 from sgrequests import SgRequests
 import json
 from sgscrape import simple_scraper_pipeline as sp
-from sgpostal.sgpostal import parse_address_intl
+# from sgpostal.sgpostal import parse_address_intl
 from html import unescape
 from bs4 import BeautifulSoup as bs
 
@@ -42,7 +42,10 @@ def get_data():
     url = "https://www.dunkindonuts.co.nz/locations"
     response = session.get(url).text
 
-    json_objects = extract_json(response)
+    json_objects = extract_json(response.split("wix-viewer-model")[1])
+
+    with open("file.txt", "w", encoding="utf-8") as output:
+        json.dump(json_objects, output, indent=4)
     loc_dict = json_objects[0]["siteFeaturesConfigs"]["router"]["pagesMap"]
 
     for location_id in loc_dict.keys():
@@ -51,7 +54,6 @@ def get_data():
         store_number = loc_dict[location_id]["pageId"]
 
         response = session.get(page_url).json()
-        print(response)
         for key in response["props"]["render"]["compProps"].keys():
             needed_id = key
             break
