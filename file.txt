@@ -1,206 +1,247 @@
 {
-    "aqvji": {
-        "pageId": "aqvji",
-        "title": "Queen St",
-        "pageUriSEO": "copy-of-penrose",
-        "pageJsonFileName": "ce4f87_38dc59338b5ff33f34915d9755bb0bab_437"
+    "structure": {
+        "components": {
+            "comp-j78bnu7n": {
+                "componentType": "GoogleMap",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu7r": {
+                "componentType": "PopupCloseIconButton",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu8a": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu7w": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu82": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu85": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu87": {
+                "componentType": "WRichText",
+                "pageId": "aqvji"
+            },
+            "aqvji": {
+                "components": [
+                    "comp-j78bnu7g"
+                ],
+                "componentType": "PopupPage",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu7g": {
+                "components": [
+                    "Containercomp-j78bnu7g"
+                ],
+                "componentType": "PopupContainer",
+                "pageId": "aqvji"
+            },
+            "comp-j78bnu7u": {
+                "components": [
+                    "comp-j78bnu8a",
+                    "comp-j78bnu7w",
+                    "comp-j78bnu82",
+                    "comp-j78bnu85",
+                    "comp-j78bnu87"
+                ],
+                "componentType": "Container",
+                "uiType": "RectangleArea",
+                "pageId": "aqvji"
+            },
+            "Containercomp-j78bnu7g": {
+                "components": [
+                    "comp-j78bnu7u",
+                    "comp-j78bnu7n",
+                    "comp-j78bnu7r"
+                ],
+                "componentType": "Group",
+                "pageId": "aqvji"
+            }
+        },
+        "features": [
+            "animations",
+            "clickHandlerRegistrar",
+            "components",
+            "popups",
+            "renderer",
+            "reporter",
+            "screenIn",
+            "scrollToAnchor",
+            "windowScroll"
+        ],
+        "siteFeaturesConfigs": null
     },
-    "aqvjd": {
-        "pageId": "aqvjd",
-        "title": "Glenfield",
-        "pageUriSEO": "copy-of-botany",
-        "pageJsonFileName": "ce4f87_6d96cbf533ecfddc09cc933487ecf27d_490"
+    "props": {
+        "render": {
+            "compProps": {
+                "comp-j78bnu7n": {
+                    "id": "comp-j78bnu7n",
+                    "urlQueries": "defaultLocation=0&showZoom=true&showStreetView=true&showMapType=true&language=en&id=dataItem-j78bnu7o",
+                    "mapData": {
+                        "mapInteractive": true,
+                        "showZoom": true,
+                        "showStreetView": true,
+                        "showMapType": true,
+                        "mapType": "ROADMAP",
+                        "mapStyle": "[]",
+                        "locations": [
+                            {
+                                "address": "175 Queen St, Auckland, 1010, New Zealand",
+                                "latitude": -36.8479925,
+                                "longitude": 174.7653682,
+                                "title": "Queen St",
+                                "description": "",
+                                "linkTitle": "",
+                                "pinIcon": "https://static.parastorage.com/services/santa-resources/resources/editor/designPanel/panelTypes/default_pin_icon.png",
+                                "pinColor": "",
+                                "locationLinkAttributes": {}
+                            }
+                        ],
+                        "defaultLocation": 0,
+                        "zoom": 14
+                    },
+                    "skin": "GoogleMapSkin"
+                },
+                "comp-j78bnu7r": {
+                    "svgContent": "<svg preserveAspectRatio=\"xMidYMid meet\" data-bbox=\"25.975 25.975 148.05 148.05\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"25.975 25.975 148.05 148.05\" role=presentation aria-hidden=true>\n    <g>\n        <path d=\"M172.9 167.6L105.3 100l67.6-67.6c1.5-1.5 1.5-3.8 0-5.3s-3.8-1.5-5.3 0L100 94.7 32.4 27.1c-1.5-1.5-3.8-1.5-5.3 0s-1.5 3.8 0 5.3L94.7 100l-67.6 67.6c-1.5 1.5-1.5 3.8 0 5.3s3.8 1.5 5.3 0l67.6-67.6 67.6 67.6c1.5 1.5 3.8 1.5 5.3 0s1.5-3.8 0-5.3z\"/>\n    </g>\n</svg>\n"
+                },
+                "comp-j78bnu8a": {
+                    "html": "<h5 class=\"font_5\" style=\"font-size:28px; text-align:center;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"font-size:28px;\"><span style=\"font-weight:bold;\"><span style=\"letter-spacing:0.05em;\">Queen St</span></span></span></span></h5>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "comp-j78bnu7w": {
+                    "html": "<h6 class=\"font_6\" style=\"font-size:22px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"letter-spacing:0.1em;\">Address</span></span></h6>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "comp-j78bnu82": {
+                    "html": "<p class=\"font_8\" style=\"line-height:1.7em; font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\">175 Queen St, Auckland, 1010</span></p>\n\n<p class=\"font_8\" style=\"line-height:1.7em; font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><a data-auto-recognition=\"true\" href=\"mailto:queenst@cafeconcepts.co.nz\">queenst@cafeconcepts.co.nz</a> </span></p>\n\n<p class=\"font_8\" style=\"line-height:1.7em; font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\">09 368 4286</span></p>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "comp-j78bnu85": {
+                    "html": "<h6 class=\"font_6\" style=\"font-size:22px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"letter-spacing:0.1em;\">Opening Hours</span></span></h6>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "comp-j78bnu87": {
+                    "html": "<h6 class=\"font_6\" style=\"font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"font-size:17px;\">Monday - Saturday 7:00am - 10:00pm</span></span></h6>\n\n<h6 class=\"font_6\" style=\"font-size:17px;\"><span style=\"font-family:arial,\uff4d\uff53 \uff50\u30b4\u30b7\u30c3\u30af,ms pgothic,\ub3cb\uc6c0,dotum,helvetica,sans-serif;\"><span style=\"font-size:17px;\">Sunday 7am - 9pm</span></span></h6>",
+                    "skin": "WRichTextNewSkin",
+                    "shouldUsePlainHTML": false,
+                    "isQaMode": false,
+                    "fullNameCompType": "wysiwyg.viewer.components.WRichText"
+                },
+                "aqvji": {
+                    "fillLayers": {
+                        "containerId": "aqvji",
+                        "hasBgFullscreenScrollEffect": false,
+                        "shouldRenderUnderlay": true,
+                        "shouldPadMedia": false
+                    }
+                },
+                "comp-j78bnu7g": {
+                    "fillLayers": {
+                        "containerId": "comp-j78bnu7g",
+                        "hasBgFullscreenScrollEffect": false,
+                        "shouldRenderUnderlay": true,
+                        "image": {
+                            "uri": "f0d903_5852e9e4a1ad486d8a27de7391310142~mv2.jpg",
+                            "alt": "",
+                            "width": 792,
+                            "height": 594,
+                            "title": "63_R1563BulkDonutsHV_0564_lf_Lo.jpg",
+                            "containerId": "comp-j78bnu7g",
+                            "hasBgScrollEffect": "",
+                            "bgEffectName": "",
+                            "alignType": "center",
+                            "displayMode": "fill",
+                            "link": {},
+                            "containerWidth": 908,
+                            "containerHeight": 539
+                        },
+                        "shouldPadMedia": false
+                    }
+                },
+                "comp-j78bnu7u": {
+                    "wedges": [],
+                    "rotatedComponents": [],
+                    "meshProps": {
+                        "wedges": [],
+                        "rotatedComponents": [],
+                        "fixedComponents": []
+                    }
+                },
+                "Containercomp-j78bnu7g": {
+                    "meshProps": {
+                        "wedges": [],
+                        "rotatedComponents": [],
+                        "fixedComponents": []
+                    }
+                }
+            }
+        },
+        "__componentsConfig__": {},
+        "components": {},
+        "popups": {
+            "closeSiteButtons": {},
+            "popupsWithCloseOnOverlayClick": {
+                "aqvji": true
+            }
+        },
+        "screenIn": {
+            "compIdToActions": {
+                "comp-j78bnu7g": [
+                    {
+                        "name": "FadeIn",
+                        "delay": 0.2,
+                        "duration": 0.75,
+                        "action": "screenIn",
+                        "targetId": "comp-j78bnu7g",
+                        "params": {
+                            "doubleDelayFixed": true
+                        },
+                        "viewMode": "desktop",
+                        "persistOnNav": false,
+                        "pageId": "aqvji"
+                    }
+                ]
+            },
+            "compIdToRotations": {
+                "comp-j78bnu7g": 0
+            }
+        },
+        "scrollToAnchor": {
+            "anchorDataIdToCompIdMap": {},
+            "nicknameToCompIdMap": {
+                "googleMaps1": "comp-j78bnu7n",
+                "button1": "comp-j78bnu7r",
+                "text1": "comp-j78bnu8a",
+                "text5": "comp-j78bnu7w",
+                "text4": "comp-j78bnu82",
+                "text3": "comp-j78bnu85",
+                "text2": "comp-j78bnu87",
+                "page1": "aqvji",
+                "lightbox1": "comp-j78bnu7g",
+                "box1": "comp-j78bnu7u"
+            },
+            "compsToUpdate": []
+        }
     },
-    "aqvjq": {
-        "pageId": "aqvjq",
-        "title": "Drivers Side bar",
-        "pageUriSEO": "copy-of-crew-manager-side-bar",
-        "pageJsonFileName": "ce4f87_8d425618a9a36be3f996829c03cfc991_482"
-    },
-    "aqvjc": {
-        "pageId": "aqvjc",
-        "title": "Botany",
-        "pageUriSEO": "copy-of-airport-international",
-        "pageJsonFileName": "ce4f87_fc02304905852d386f99b1966020872f_437"
-    },
-    "aqvj8": {
-        "pageId": "aqvj8",
-        "title": "Airport Business Park",
-        "pageUriSEO": "popup-aqvj8",
-        "pageJsonFileName": "ce4f87_9e2b533980984c2c6c6ef1d520238467_454"
-    },
-    "cf5y": {
-        "pageId": "cf5y",
-        "title": "Locations",
-        "pageUriSEO": "locations",
-        "pageJsonFileName": "ce4f87_3cd800e57edd16b58504713fa3d4288c_489"
-    },
-    "cjg9": {
-        "pageId": "cjg9",
-        "title": "Home",
-        "pageUriSEO": "home",
-        "pageJsonFileName": "ce4f87_1717371afb20141b9f4d108e95c775c6_497"
-    },
-    "aqvjs": {
-        "pageId": "aqvjs",
-        "title": "LynnMall",
-        "pageUriSEO": "copy-of-lincoln-north",
-        "pageJsonFileName": "ce4f87_e8b93164e29a4a5a1bf8c42283b357c3_437"
-    },
-    "aqvjf": {
-        "pageId": "aqvjf",
-        "title": "Manukau",
-        "pageUriSEO": "copy-of-lincoln-road-aqvjf",
-        "pageJsonFileName": "ce4f87_db57ebc1ae13330420e4a48de0fa51d7_447"
-    },
-    "lkhbu": {
-        "pageId": "lkhbu",
-        "title": "Order to Pick Up",
-        "pageUriSEO": "onlineordering",
-        "pageJsonFileName": "ce4f87_faa9cd80eb553ca833a9d2ee4ef2ddb6_469"
-    },
-    "vuuod": {
-        "pageId": "vuuod",
-        "title": "Donuts",
-        "pageUriSEO": "donuts",
-        "pageJsonFileName": "ce4f87_f7e5da3bba7de952a47eeb3af583a04f_482"
-    },
-    "ti429": {
-        "pageId": "ti429",
-        "title": "Munchkins",
-        "pageUriSEO": "munchkins",
-        "pageJsonFileName": "ce4f87_0d5f7e66d60cbbff03e750ce8392d564_437"
-    },
-    "aqvju": {
-        "pageId": "aqvju",
-        "title": "Sylvia Park",
-        "pageUriSEO": "copy-of-lynnmall",
-        "pageJsonFileName": "ce4f87_3e7715fc0bfbfc53aafcf05833e0a8d7_437"
-    },
-    "aqvjp": {
-        "pageId": "aqvjp",
-        "title": "Contact (Sidebar)",
-        "pageUriSEO": "popup-aqvjp",
-        "pageJsonFileName": "ce4f87_e3c2b4f64482f8a7aea053d12bfe1fdd_437"
-    },
-    "aqvjg": {
-        "pageId": "aqvjg",
-        "title": "Mt Wellington",
-        "pageUriSEO": "copy-of-lincoln-road-aqvjg",
-        "pageJsonFileName": "ce4f87_8e5c310f10006727c1b4e4bcf6c86d76_437"
-    },
-    "aqvjk": {
-        "pageId": "aqvjk",
-        "title": "Westgate",
-        "pageUriSEO": "copy-of-takanini",
-        "pageJsonFileName": "ce4f87_2a18988dc0ece17c0cb2d391e17e5a78_492"
-    },
-    "aqvjh": {
-        "pageId": "aqvjh",
-        "title": "Download App",
-        "pageUriSEO": "copy-of-mt-wellington",
-        "pageJsonFileName": "ce4f87_4d48bddd8e5fbf0681bbdb429e6f2f37_437"
-    },
-    "aqvjv": {
-        "pageId": "aqvjv",
-        "title": "Mt Eden",
-        "pageUriSEO": "copy-of-airport-business-park",
-        "pageJsonFileName": "ce4f87_c9b51a51991cc800d4ed29cf9572d73b_491"
-    },
-    "aqvjo": {
-        "pageId": "aqvjo",
-        "title": "Crew/Manager Side bar",
-        "pageUriSEO": "popup-aqvjo",
-        "pageJsonFileName": "ce4f87_8e683caf962ac3a2d567f31d47a83c59_437"
-    },
-    "aqvjj": {
-        "pageId": "aqvjj",
-        "title": "Takanini",
-        "pageUriSEO": "copy-of-queen-st",
-        "pageJsonFileName": "ce4f87_132f320a9be24d95c9b5b95fb2f25807_437"
-    },
-    "aqvjn": {
-        "pageId": "aqvjn",
-        "title": "Rotorua",
-        "pageUriSEO": "copy-of-hamilton-aqvjn",
-        "pageJsonFileName": "ce4f87_3242ca28eaa25fe06f79cc1eccef53ca_485"
-    },
-    "aqvjl": {
-        "pageId": "aqvjl",
-        "title": "Hamilton",
-        "pageUriSEO": "copy-of-westgate",
-        "pageJsonFileName": "ce4f87_9edbecbbaf1320ced2994f31ab18e1f7_437"
-    },
-    "aqvjb": {
-        "pageId": "aqvjb",
-        "title": "Airport International",
-        "pageUriSEO": "copy-of-airport-domestic-departures",
-        "pageJsonFileName": "ce4f87_61a02467ffde64ce8ef1117636150ba3_476"
-    },
-    "mhizl": {
-        "pageId": "mhizl",
-        "title": "Careers",
-        "pageUriSEO": "careers",
-        "pageJsonFileName": "ce4f87_4f280b6581ffc38153b26cd0de1c2a63_437"
-    },
-    "aqvj9": {
-        "pageId": "aqvj9",
-        "title": "Airport Domestic Foodcourt",
-        "pageUriSEO": "copy-of-airport-business-park-aqvj9",
-        "pageJsonFileName": "ce4f87_512ad2abbafd7308e186081cfb10d55a_481"
-    },
-    "byorf": {
-        "pageId": "byorf",
-        "title": "Gift Cards",
-        "pageUriSEO": "giftcards",
-        "pageJsonFileName": "ce4f87_2027b262ba81a441ea82490a69d92688_437"
-    },
-    "an3ul": {
-        "pageId": "an3ul",
-        "title": "Drinks",
-        "pageUriSEO": "drinks",
-        "pageJsonFileName": "ce4f87_65d1ad6d5bc92a1ed6d54f5ebd53aa4b_437"
-    },
-    "aqvjm": {
-        "pageId": "aqvjm",
-        "title": "The Base",
-        "pageUriSEO": "copy-of-hamilton-aqvjm",
-        "pageJsonFileName": "ce4f87_5e5f61aee525064d4c25c923ebd742ff_463"
-    },
-    "aqvjw": {
-        "pageId": "aqvjw",
-        "title": "Constellation Drive",
-        "pageUriSEO": "copy-of-mt-eden",
-        "pageJsonFileName": "ce4f87_4991ae66948206c00d7900e8404f4b23_466"
-    },
-    "kvlhz": {
-        "pageId": "kvlhz",
-        "title": "Christmas Hours",
-        "pageUriSEO": "christmashours",
-        "pageJsonFileName": "ce4f87_27dcd95007dc0b2864e040f203c30591_488"
-    },
-    "itla8": {
-        "pageId": "itla8",
-        "title": "Contact Us",
-        "pageUriSEO": "contactus",
-        "pageJsonFileName": "ce4f87_b68d640c9a36201e3c4f962bb6a165e9_454"
-    },
-    "jc2d9": {
-        "pageId": "jc2d9",
-        "title": "FAQs",
-        "pageUriSEO": "faqs",
-        "pageJsonFileName": "ce4f87_6818f2f12436bd55ba383aa25ce75bf5_437"
-    },
-    "aqvjr": {
-        "pageId": "aqvjr",
-        "title": "Coming Soon",
-        "pageUriSEO": "copy-of-airport-business-park-aqvjr",
-        "pageJsonFileName": "ce4f87_f5cf62feb2d5c7e22bd0c4563d2a5af1_488"
-    },
-    "aqvje": {
-        "pageId": "aqvje",
-        "title": "Lincoln North",
-        "pageUriSEO": "copy-of-glenfield",
-        "pageJsonFileName": "ce4f87_508e55fe5ebe1a00c22b322427412efd_449"
-    }
+    "stateRefs": {}
 }

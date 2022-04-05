@@ -48,6 +48,8 @@ def get_data():
 
     for location_id in loc_dict.keys():
         json_page_name = loc_dict[location_id]["pageJsonFileName"]
+        if json_page_name == "ce4f87_1717371afb20141b9f4d108e95c775c6_497":
+            json_page_name = "ce4f87_2a18988dc0ece17c0cb2d391e17e5a78_492"
         page_url = start_of_url + json_page_name + end_of_url
         store_number = loc_dict[location_id]["pageId"]
 
