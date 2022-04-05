@@ -51,6 +51,7 @@ def get_data():
         store_number = loc_dict[location_id]["pageId"]
 
         response = session.get(page_url).json()
+        print(response)
         for key in response["props"]["render"]["compProps"].keys():
             needed_id = key
             break
