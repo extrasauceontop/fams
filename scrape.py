@@ -55,9 +55,13 @@ def get_data():
         print(page_url)
         with open("file.txt", "w", encoding="utf-8") as output:
             json.dump(response, output, indent=4)
-        for key in response["props"]["render"]["compProps"].keys():
-            needed_id = key
-            break
+        
+        try:
+            for key in response["props"]["render"]["compProps"].keys():
+                needed_id = key
+                break
+        except Exception:
+            continue
 
         try:
             if "CLOSED" not in str(response["props"]["render"]["compProps"]):
