@@ -1,7 +1,7 @@
 from sgrequests import SgRequests
 import json
 from sgscrape import simple_scraper_pipeline as sp
-# from sgpostal.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from html import unescape
 from bs4 import BeautifulSoup as bs
 
