@@ -53,7 +53,7 @@ def get_data():
         else:
             location_response = session.get(page_url, headers=headers).text
             location_soup = bs(location_response, "html.parser")
-
+            print(location_response)
             try:
                 phone = (
                     location_soup.find("div", attrs={"class": "store-phone store-txt"})
