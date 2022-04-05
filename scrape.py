@@ -1,117 +1,197 @@
-import re
-from lxml import html
-from sgscrape.sgrecord import SgRecord
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgpostal import parse_address, International_Parser
+import json
+from sgscrape import simple_scraper_pipeline as sp
+from sgpostal.sgpostal import parse_address_intl
+from html import unescape
 from bs4 import BeautifulSoup as bs
 
 
-def get_international(line):
-    post = re.findall(r"\d{5}", line)
-    if post:
-        adr = parse_address(International_Parser(), line, postcode=post.pop())
-    else:
-        adr = parse_address(International_Parser(), line)
+def extract_json(html_string):
+    json_objects = []
+    count = 0
 
-    adr1 = adr.street_address_1 or ""
-    adr2 = adr.street_address_2 or ""
-    street = f"{adr1} {adr2}".strip()
-    postal = adr.postcode or SgRecord.MISSING
+    brace_count = 0
+    for element in html_string:
 
-    return street, postal
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
 
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    if "pagesMap" in html_string[start : end + 1]:
+                        json_objects.append(json.loads(html_string[start : end + 1]))
+                    else:
+                        pass
+                except Exception:
+                    pass
+        count = count + 1
 
-def get_coords_from_embed(text):
-    try:
-        latitude = text.split("!3d")[1].strip().split("!")[0].strip()
-        longitude = text.split("!2d")[1].strip().split("!")[0].strip()
-    except IndexError:
-        latitude, longitude = SgRecord.MISSING, SgRecord.MISSING
-
-    return latitude, longitude
-
-
-def get_tree(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
-    r = session.get(url, headers=headers)
-    print(r.status_code)
-    return r.text
+    return json_objects
 
 
-def get_additional(page_url):
-    print(page_url)
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
+def get_data():
+    start_of_url = "https://siteassets.parastorage.com/pages/pages/thunderbolt?beckyExperiments=specs.thunderbolt.responsiveAbsoluteChildrenPosition%3Atrue%2Cspecs.thunderbolt.byRefV2%3Atrue%2Cspecs.thunderbolt.DatePickerPortal%3Atrue%2Cspecs.thunderbolt.LinkBarPlaceholderImages%3Atrue%2Cspecs.thunderbolt.carmi_simple_mode%3Atrue%2Cspecs.thunderbolt.final_image_auto_encode%3Atrue%2Cspecs.thunderbolt.prefetchComponentsShapesInBecky%3Atrue%2Cspecs.thunderbolt.inflatePresetsWithNoDefaultItems%3Atrue%2Cspecs.thunderbolt.maskImageCSS%3Atrue%2Cspecs.thunderbolt.SearchBoxModalSuggestions%3Atrue&contentType=application%2Fjson&deviceType=Other&dfCk=6&dfVersion=1.1581.0&excludedSafariOrIOS=false&experiments=bv_removeMenuDataFromPageJson%2Cbv_remove_add_chat_viewer_fixer%2Cdm_enableDefaultA11ySettings%2Cdm_fixStylableButtonProperties%2Cdm_fixVectorImageProperties%2Cdm_linkRelDefaults%2Cdm_migrateToTextTheme&externalBaseUrl=https%3A%2F%2Fwww.dunkindonuts.co.nz&fileId=0740a8de.bundle.min&hasTPAWorkerOnSite=false&isHttps=true&isInSeo=false&isMultilingualEnabled=false&isPremiumDomain=true&isUrlMigrated=true&isWixCodeOnPage=false&isWixCodeOnSite=true&language=en&languageResolutionMethod=QueryParam&metaSiteId=af1383a7-5553-4e3b-8a74-b212a6373a87&module=thunderbolt-features&originalLanguage=en&pageId="
+    end_of_url = ".json&quickActionsMenuEnabled=true&registryLibrariesTopology=%5B%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22wixui%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%2C%7B%22artifactId%22%3A%22editor-elements%22%2C%22namespace%22%3A%22dsgnsys%22%2C%22url%22%3A%22https%3A%2F%2Fstatic.parastorage.com%2Fservices%2Feditor-elements%2F1.7951.0%22%7D%5D&remoteWidgetStructureBuilderVersion=1.229.0&siteId=8660dfe0-866b-4cbb-9177-b5189db59276&siteRevision=491&staticHTMLComponentUrl=https%3A%2F%2Fwww-dunkindonuts-co-nz.filesusr.com%2F&useSandboxInHTMLComp=false&viewMode=desktop"
 
-    response_stuff = session.get(page_url, headers=headers)
-    print(response_stuff.status_code)
-    response = response_stuff.text
-    soup = bs(response, "html.parser")
-    
-    hours = soup.find("div", attrs={"class": "store-time store-txt"}).text.strip()
-    
-    print(hours)
-
-    phone = "<LATER>"
-    lat = "<LATER>"
-    lng = "<LATER>"
-    hoo = "<LATER>"
-    return phone, lat, lng, hoo
-
-
-def fetch_data(sgw: SgWriter):
-    tree = get_tree("https://www.munichsports.com/en/munich-stores")
-    tree = html.fromstring(tree)
-    divs = tree.xpath("//div[@class='shop-info']")
-    print(len(divs))
-    for d in divs:
-        location_name = "".join(d.xpath(".//span[@class='store']/text()")).strip()
-        city = "".join(d.xpath(".//span[@class='city']/text()")).strip()
-        slug = "".join(d.xpath(".//div[@class='shop-name']/a/@href"))
-        page_url = f"https://www.munichsports.com{slug}"
-        line = d.xpath(
-            ".//div[@class='shop-address']/text()|.//div[@class='shop-address']/div/text()"
-        )
-        line = list(filter(None, [li.strip() for li in line]))
-        raw_address = " ".join(line).upper().replace(location_name, "").strip()
-        if "OUTLETS" in raw_address:
-            raw_address = raw_address.split("OUTLETS")[1].strip()
-        if "OUTLET" in raw_address:
-            raw_address = raw_address.split("OUTLET")[1].strip()
-        if raw_address.startswith("C.C.") or raw_address.startswith("CC"):
-            raw_address = ",".join(raw_address.split(",")[1:]).strip()
-        if raw_address.startswith("-") or raw_address.startswith(","):
-            raw_address = raw_address[1:].strip()
-
-        street_address, postal = get_international(raw_address)
-        phone, latitude, longitude, hours_of_operation = get_additional(page_url)
-
-        row = SgRecord(
-            page_url=page_url,
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            zip_postal=postal,
-            country_code="ES",
-            latitude=latitude,
-            longitude=longitude,
-            phone=phone,
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-            raw_address=raw_address,
-        )
-
-        sgw.write_row(row)
-
-
-if __name__ == "__main__":
-    locator_domain = "https://www.munichsports.com/"
     session = SgRequests()
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        fetch_data(writer)
+    url = "https://www.dunkindonuts.co.nz/locations"
+    response = session.get(url).text
+
+    json_objects = extract_json(response)
+    loc_dict = json_objects[0]["siteFeaturesConfigs"]["router"]["pagesMap"]
+
+    for location_id in loc_dict.keys():
+        json_page_name = loc_dict[location_id]["pageJsonFileName"]
+        page_url = start_of_url + json_page_name + end_of_url
+        store_number = loc_dict[location_id]["pageId"]
+
+        response = session.get(page_url).json()
+        for key in response["props"]["render"]["compProps"].keys():
+            needed_id = key
+            break
+
+        try:
+            if "CLOSED" not in str(response["props"]["render"]["compProps"]):
+                response["props"]["render"]["compProps"][needed_id]["mapData"][
+                    "locations"
+                ][0]["title"]
+            else:
+                continue
+        except Exception:
+            continue
+        with open("file.txt", "w", encoding="utf-8") as output:
+            json.dump(response, output, indent=4)
+        locator_domain = "dunkindonuts.co.nz"
+        location_name = response["props"]["render"]["compProps"][needed_id]["mapData"][
+            "locations"
+        ][0]["title"]
+        latitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
+            "locations"
+        ][0]["latitude"]
+        longitude = response["props"]["render"]["compProps"][needed_id]["mapData"][
+            "locations"
+        ][0]["longitude"]
+
+        full_address = response["props"]["render"]["compProps"][needed_id]["mapData"][
+            "locations"
+        ][0]["address"]
+        addr = parse_address_intl(full_address)
+
+        city = addr.city
+        if city is None:
+            city = "<MISSING>"
+
+        address_1 = addr.street_address_1
+        address_2 = addr.street_address_2
+
+        if address_1 is None and address_2 is None:
+            address = "<MISSING>"
+        else:
+            address = (
+                (str(address_1) + " " + str(address_2)).strip().replace(" None", "")
+            )
+
+        state = addr.state
+        if state is None:
+            state = "<MISSING>"
+
+        zipp = addr.postcode
+        if zipp is None:
+            zipp = "<MISSING>"
+
+        country_code = addr.country
+        if country_code is None:
+            country_code = "<MISSING>"
+
+        location_type = "<MISSING>"
+
+        for key in response["props"]["render"]["compProps"].keys():
+            part_check = response["props"]["render"]["compProps"][key]
+            for sub_key in part_check.keys():
+                if sub_key == "html":
+                    phone_check = part_check[sub_key]
+                    if (
+                        city.lower() in phone_check.lower()
+                        or '<p class="font_8" style="line-height:1.7em; font-size:17px;"><span style="font-family:arial'
+                        in phone_check.lower()
+                    ):
+                        phone = unescape(
+                            phone_check.replace("\n", "")
+                            .replace("</span></span>", "</span>")
+                            .split("</span>")[-2]
+                            .split(">")[-1]
+                            .strip()
+                        ).replace("Phone ", "")
+
+        hours_soup = bs(phone_check, "html.parser")
+        hours_text = hours_soup.text.strip()
+
+        hours = (
+            hours_text.replace("\n", ", ").split(", Mall")[0].replace(" , ", ", ")
+        ).strip()
+
+        if hours[-3] == ",":
+            hours = hours[:-3]
+
+        if "opening hours" in hours.lower():
+            hours = "Temporarily Closed"
+
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
+
+
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()
