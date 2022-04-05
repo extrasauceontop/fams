@@ -1,17 +1,53 @@
-from sgrequests import SgRequests
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 import time
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
+def get_driver(url, class_name, driver=None):
+    if driver is not None:
+        driver.quit()
+
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    x = 0
+    while True:
+        x = x + 1
+        try:
+            driver = SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver()
+            driver.get(url)
+
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+            )
+            break
+        except Exception:
+            driver.quit()
+            if x == 10:
+                raise Exception(
+                    "Make sure this ran with a Proxy, will fail without one"
+                )
+            continue
+    return driver
 
 
 def get_data():
-    session = SgRequests()
     start_url = "https://www.munichsports.com/en/munich-stores"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0"
-    }
-    response = session.get(start_url, headers=headers).text.replace("<br>", "\n")
+    driver = get_driver(start_url, "icon")
+    response = driver.page_source
     soup = bs(response, "html.parser")
 
     grids = soup.find_all("div", attrs={"class": "shop-text text-center"})
@@ -51,9 +87,10 @@ def get_data():
             pass
 
         else:
-            location_response = session.get(page_url, headers=headers).text
+            driver = get_driver(page_url, "icon", driver=driver)
+            location_response = driver.page_source
             location_soup = bs(location_response, "html.parser")
-            print(location_response)
+            # print(location_response)
             try:
                 phone = (
                     location_soup.find("div", attrs={"class": "store-phone store-txt"})
