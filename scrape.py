@@ -20,6 +20,7 @@ def get_driver(url, class_name, driver=None):
     )
     x = 0
     while True:
+        print(url)
         x = x + 1
         try:
             driver = SgChrome(
