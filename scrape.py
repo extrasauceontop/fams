@@ -52,16 +52,13 @@ def get_data():
         store_number = loc_dict[location_id]["pageId"]
 
         response = session.get(page_url).json()
-        print(page_url)
-        with open("file.txt", "w", encoding="utf-8") as output:
-            json.dump(response, output, indent=4)
+        print(location_id)
+        print(json_page_name)
         
-        try:
-            for key in response["props"]["render"]["compProps"].keys():
-                needed_id = key
-                break
-        except Exception:
-            continue
+
+        for key in response["props"]["render"]["compProps"].keys():
+            needed_id = key
+            break
 
         try:
             if "CLOSED" not in str(response["props"]["render"]["compProps"]):
