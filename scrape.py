@@ -1,175 +1,203 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-from bs4 import BeautifulSoup as bs
-from sgscrape import simple_scraper_pipeline as sp
-import time
-import ssl
+from sgrequests import SgRequests
+from sglogging import SgLogSetup
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
-ssl._create_default_https_context = ssl._create_unverified_context
+logger = SgLogSetup().get_logger("homedepot_com")
+
+session = SgRequests()
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+}
 
 
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
+def fetch_data():
+    locs = []
+    states = []
+    url = "https://www.homedepot.com/l/storeDirectory"
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if '<a class="store-directory__state-link' in line:
+            items = line.split('<a class="store-directory__state-link')
+            for item in items:
+                if 'href="https://www.homedepot.com/l/' in item:
+                    lurl = item.split('href="')[1].split('"')[0]
+                    if lurl not in states:
+                        states.append(lurl)
+    for state in states:
+        Found = True
+        while Found:
+            logger.info(state)
+            r2 = session.get(state, headers=headers)
+            for line2 in r2.iter_lines():
+                if '","url":"https://www.homedepot.com/' in line2:
+                    items = line2.split('","url":"https://www.homedepot.com/')
+                    for item in items:
+                        if '","phone":' in item:
+                            Found = False
+                            surl = "https://www.homedepot.com/" + item.split('"')[0]
+                            if surl not in locs:
+                                locs.append(surl)
 
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        print(url)
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
+    logger.info(len(locs))
 
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
+    for loc in locs:
+        if "/designcenter" in loc:
             continue
-    return driver
+        if loc == "https://www.homedepot.com/l/storeDirectory":
+            continue
 
-
-def get_data():
-    start_url = "https://www.munichsports.com/en/munich-stores"
-
-    driver = get_driver(start_url, "icon")
-    response = driver.page_source
-    soup = bs(response, "html.parser")
-
-    grids = soup.find_all("div", attrs={"class": "shop-text text-center"})
-
-    for location in grids:
-        time.sleep(1)
-        locator_domain = "https://www.munichsports.com"
-        page_url = (
-            locator_domain
-            + location.find("div", attrs={"class": "shop-name"}).find("a")["href"]
-        )
-        location_name = (
-            location.find("div", attrs={"class": "shop-name"})
-            .find("span", attrs={"class": "store"})
-            .text.strip()
-        )
-        city = location.find("span", attrs={"class": "city"}).text.strip()
-        store_number = "<MISSING>"
-        address = (
-            location.find("div", attrs={"class": "shop-address"})
-            .text.strip()
-            .split("\n")[0]
-            .replace("C.C. ", "")
-            .replace("C/ ", "")
-        )
-        state = "<MISSING>"
-        zipp = "<MISSING>"
-        location_type = "<MISSING>"
-        country_code = "ES"
-
-        if page_url == "https://www.munichsports.com/en/pages/191":
-            phone = "<MISSING>"
-            page_url = "<MISSING>"
-            hours = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            pass
-
-        else:
-            driver = get_driver(page_url, "icon", driver=driver)
-            location_response = driver.page_source
-            location_soup = bs(location_response, "html.parser")
-            # print(location_response)
+        Found = True
+        rcount = 0
+        while Found and rcount <= 3:
             try:
-                phone = (
-                    location_soup.find("div", attrs={"class": "store-phone store-txt"})
-                    .find("a")["href"]
-                    .replace("tel:", "")
-                    .replace("+", "")
-                )
-            except Exception:
-                phone_part = location_soup.find(
-                    "div", attrs={"class": "store-phone store-txt"}
-                ).text.strip()
-
+                rcount = rcount + 1
+                logger.info("Pulling Location %s..." % loc)
+                website = "homedepot.com"
+                typ = "<MISSING>"
+                hours = ""
+                name = ""
+                add = ""
+                city = ""
+                state = ""
+                zc = ""
+                country = "US"
+                store = ""
                 phone = ""
-                for character in phone_part:
-                    if character.isdigit():
-                        phone = phone + character
+                lat = ""
+                lng = ""
+                phone = ""
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    if "<h1" in line2:
+                        name = line2.split("<h1")[1].split('">')[1].split("<")[0]
+                    if '"stores":[{' in line2:
+                        Found = False
+                        add = line2.split('"street":"')[1].split('"')[0]
+                        city = line2.split('"city":"')[1].split('"')[0]
+                        state = line2.split('"state":"')[1].split('"')[0]
+                        zc = line2.split('"postalCode":"')[1].split('"')[0]
+                        store = line2.split('"storeId":"')[1].split('"')[0]
+                        lng = line2.split('"lng":')[1].split("}")[0]
+                        lat = line2.split('"lat":')[1].split(",")[0]
+                    if '"openingHours":["' in line2:
+                        hours = (
+                            line2.split('"openingHours":["')[1]
+                            .split('"],')[0]
+                            .replace('","', "; ")
+                            .replace('"', "")
+                        )
+                    if phone == "" and 'href="tel:' in line2:
+                        phone = line2.split('href="tel:')[1].split('"')[0]
+                if hours == "":
+                    hours = "<MISSING>"
+                if state == "PR":
+                    country = "Puerto Rico"
+                    state = "<MISSING>"
+                if state == "VI":
+                    country = "US Virgin Islands"
+                    state = "<MISSING>"
+                if state == "GU":
+                    country = "Guam"
+                    state = "<MISSING>"
+                
+                if name == "" or name == "<MISSING>":
+                    print(r2.text)
+                    raise Exception
 
-            lat_lon_part = location_soup.find(
-                "iframe", attrs={"class": "embed-responsive-item"}
-            )["src"]
-            latitude = lat_lon_part.split("!3d")[1].split("!")[0]
-            longitude = lat_lon_part.split("!2d")[1].split("!3d")[0]
+                yield SgRecord(
+                    locator_domain=website,
+                    page_url=loc,
+                    location_name=name,
+                    street_address=add,
+                    city=city,
+                    state=state,
+                    zip_postal=zc,
+                    country_code=country,
+                    phone=phone,
+                    location_type=typ,
+                    store_number=store,
+                    latitude=lat,
+                    longitude=lng,
+                    hours_of_operation=hours,
+                )
 
-            hours = location_soup.find(
-                "div", attrs={"class": "store-time store-txt"}
-            ).text.strip()
+            except Exception:
+                if rcount == 3:
+                    raise Exception
 
-        yield {
-            "locator_domain": locator_domain,
-            "page_url": page_url,
-            "location_name": location_name,
-            "latitude": latitude,
-            "longitude": longitude,
-            "city": city,
-            "store_number": store_number,
-            "street_address": address,
-            "state": state,
-            "zip": zipp,
-            "phone": phone,
-            "location_type": location_type,
-            "hours": hours,
-            "country_code": country_code,
-        }
+                else:
+                    pass
+
+    website = "homedepot.com"
+    typ = "<MISSING>"
+    hours = "Mon-Sat 9:00am - 7:00pm; Sun 10:00am - 5:00pm"
+    name = "San Diego"
+    add = "9480 Carroll Park Drive"
+    city = "San Diego"
+    state = "CA"
+    zc = "92121"
+    country = "US"
+    store = "<MISSING>"
+    phone = "858-812-8680"
+    lat = "32.8865868"
+    lng = "-117.1739095"
+    loc = "https://hddc-appointment.extapps.homedepot.com/storeSelection"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
+    website = "homedepot.com"
+    typ = "<MISSING>"
+    hours = "Mon-Sat 10:00am - 7:00pm; Sun 10:00am - 6:00pm"
+    name = "Rockville"
+    add = "12087 Rockville Pike"
+    city = "Rockville"
+    state = "MD"
+    zc = "20852"
+    country = "US"
+    store = "<MISSING>"
+    phone = "301-692-3700"
+    lat = "39.0563569"
+    lng = "-77.1188593"
+    loc = "https://www.homedepot.com/c/designcenter"
+    yield SgRecord(
+        locator_domain=website,
+        page_url=loc,
+        location_name=name,
+        street_address=add,
+        city=city,
+        state=state,
+        zip_postal=zc,
+        country_code=country,
+        phone=phone,
+        location_type=typ,
+        store_number=store,
+        latitude=lat,
+        longitude=lng,
+        hours_of_operation=hours,
+    )
 
 
 def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.MappingField(mapping=["locator_domain"]),
-        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
-        location_name=sp.MappingField(
-            mapping=["location_name"], part_of_record_identity=True
-        ),
-        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
-        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
-        street_address=sp.MultiMappingField(
-            mapping=["street_address"], is_required=False
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(mapping=["state"], is_required=False),
-        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
-        country_code=sp.MappingField(mapping=["country_code"]),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(
-            mapping=["store_number"], part_of_record_identity=True
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="Crawler",
-        data_fetcher=get_data,
-        field_definitions=field_defs,
-        log_stats_interval=15,
-    )
-    pipeline.run()
+    results = fetch_data()
+    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
+        for rec in results:
+            writer.write_row(rec)
 
 
 scrape()
