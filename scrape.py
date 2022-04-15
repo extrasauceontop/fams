@@ -1,150 +1,110 @@
-import httpx
-from lxml import html
-from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgpostal.sgpostal import International_Parser, parse_address
+# -*- coding: utf-8 -*-
 import re
+from lxml import etree
+from urllib.parse import urljoin
+
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
 
 
-def fetch_data(sgw: SgWriter):
-    with SgRequests() as http:
-        locator_domain = "https://www.sfera.com/"
-        api_url = "https://www.sfera.com/pl/stores"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-        }
-        r = http.get(url=api_url, headers=headers)
-        assert isinstance(r, httpx.Response)
-        assert 200 == r.status_code
-        tree = html.fromstring(r.text)
-        div = "".join(
-            tree.xpath(
-                '//script[contains(text(), "location3 = new woosmap.map.LatLng(")]/text()'
-            )
-        ).split("location3 = new woosmap.map.LatLng(")[1:]
-        for d in div:
-            latitude = d.split(",")[0].strip()
-            longitude = d.split(",")[1].split(")")[0].strip()
-            location_name = d.split("title:")[1].split(",")[0].replace("'", "").strip()
+def fetch_data():
+    session = SgRequests()
+    scraped_urls = []
+    start_url = "https://www.kumon.ne.jp/enter/search/search.php"
+    domain = "kumon.ne.jp"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
 
-            headers = {
-                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-                "Accept": "*/*",
-                "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0",
-                "X-Requested-With": "XMLHttpRequest",
-                "Origin": "https://www.sfera.com",
-                "Connection": "keep-alive",
-                "Referer": "https://www.sfera.com/ae/stores/",
-                "Sec-Fetch-Dest": "empty",
-                "Sec-Fetch-Mode": "cors",
-                "Sec-Fetch-Site": "same-origin",
-                "TE": "trailers",
-            }
-            data = {
-                "lat": f"{latitude}",
-                "lng": f"{longitude}",
-                "cont": "1",
-                "entrada": "1",
-                "busca": f"{location_name}",
-            }
-            api_url_1 = "https://www.sfera.com/one/mod/tiendas_ajax.php"
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
+    all_pref = dom.xpath('//div[@class="prefSearch"]//li[@class="pref"]/a/@href')
+    for p_url in all_pref:
+        response = session.get(urljoin(start_url, p_url))
+        dom = etree.HTML(response.text)
+        all_cities = dom.xpath('//section[@id="slctCity"]//li/a/@href')
+        for c_url in all_cities:
+            response = session.get(urljoin(start_url, c_url))
+            dom = etree.HTML(response.text)
+            all_sb = dom.xpath('//section[@id="slctCity"]//li/a/@href')
+            for sb_url in all_sb:
+                lat = re.findall("x=(.+?)&", sb_url)[0]
+                lng = re.findall("y=(.+?)&", sb_url)[0]
+                post_url = "https://www.kumon.ne.jp/enter/search/classroom_search.php"
+                frm = {
+                    "age": "noSelect",
+                    "open": "noSelect",
+                    "searchAddress": "",
+                    "online": "noSelect",
+                    "cx": lat,
+                    "cy": lng,
+                    "xmin": str(float(lat) - 300.00),
+                    "xmax": str(float(lat) + 300.00),
+                    "ymin": str(float(lng) - 300.0),
+                    "ymax": str(float(lng) + 300.0),
+                    "scaleId": "5",
+                    "isscale": "0",
+                    "code": "",
+                    "search_zip": "",
+                }
+                data = session.post(post_url, data=frm)
+                if data.status_code != 200:
+                    continue
+                data = data.json()
+                for poi in data["classroomList"]:
+                    page_url = f"https://www.kumon.ne.jp/enter/search/classroom/{poi['cid']}/index.html".lower()
+                    if page_url in scraped_urls:
+                        continue
+                    scraped_urls.append(page_url)
+                    raw_address = poi["addr"] + poi["saddr"]
+                    addr = parse_address_intl(raw_address)
+                    street_address = addr.street_address_1
+                    if addr.street_address_2:
+                        street_address += ", " + addr.street_address_2
+                    loc_response = session.get(page_url)
+                    if loc_response.status_code != 200:
+                        continue
+                    loc_dom = etree.HTML(loc_response.text)
+                    hoo = loc_dom.xpath('//div[@class="days"]//text()')
+                    hoo = " ".join([e.strip() for e in hoo if e.strip()])
 
-            r = http.post(url=api_url_1, headers=headers, data=data)
-            assert isinstance(r, httpx.Response)
-            assert 200 == r.status_code
-            tree = html.fromstring(r.text)
-            divs = tree.xpath('//div[contains(@id, "tiendas_obj")]')
-            for li in divs:
-                ad = (
-                    "".join(li.xpath("./div[1]/following-sibling::text()[1]"))
-                    .replace("\n", "")
-                    .strip()
-                )
-                ad = " ".join(ad.split())
-                page_url = f"https://www.sfera.com/pl/stores/?tiendas_buscar={location_name}&coord={latitude}@@{longitude}"
-                a = parse_address(International_Parser(), ad)
-                street_address = (
-                    f"{a.street_address_1} {a.street_address_2}".replace(
-                        "None", ""
-                    ).strip()
-                    or "<MISSING>"
-                )
-                if street_address == "<MISSING>" or street_address.isdigit():
-                    street_address = ad
-                state = a.state or "<MISSING>"
-                postal = a.postcode or "<MISSING>"
-                country_code = a.country or "<MISSING>"
-                city = a.city or "<MISSING>"
-
-                phone = (
-                    "".join(li.xpath('.//span[@class="tientextos2"]/text()'))
-                    .replace("\n", "")
-                    .strip()
-                    or "<MISSING>"
-                )
-                try:
-                    latitude = "".join(li.xpath(".//@onclick")).split(",")[1].strip()
-                    longitude = (
-                        "".join(li.xpath(".//@onclick"))
-                        .split(",")[2]
-                        .split(")")[0]
-                        .strip()
+                    item = SgRecord(
+                        locator_domain=domain,
+                        page_url=page_url,
+                        location_name=poi["rname"] + "教室",
+                        street_address=street_address,
+                        city=addr.city,
+                        state=addr.state,
+                        zip_postal=poi["yubno"],
+                        country_code=addr.country,
+                        store_number=poi["id"],
+                        phone=poi["ktelno"],
+                        location_type="",
+                        latitude="",
+                        longitude="",
+                        hours_of_operation=hoo,
+                        raw_address=raw_address,
                     )
-                except:
-                    latitude, longitude = "<MISSING>", "<MISSING>"
-                hours_of_operation = (
-                    " ".join(
-                        li.xpath(
-                            './/span[@class="tientextos2"]/following-sibling::text()'
-                        )
-                    )
-                    .replace("\n", "")
-                    .strip()
-                    or "<MISSING>"
-                )
-                hours_of_operation = " ".join(hours_of_operation.split())
 
-                if city == "<MISSING>":
-                    city = ""
-                    city_parts = ad.split(" - ")[-2].split(" ")
+                    yield item
 
-                    for part in city_parts:
-                        if bool(re.search(r'\d', part)) is False:
-                            city = city + part + " "
-                
-                city = city.strip()
 
-                row = SgRecord(
-                    locator_domain=locator_domain,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=postal,
-                    country_code=country_code,
-                    store_number=SgRecord.MISSING,
-                    phone=phone,
-                    location_type=SgRecord.MISSING,
-                    latitude=latitude,
-                    longitude=longitude,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=ad,
-                )
-
-                sgw.write_row(row)
+def scrape():
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
-    session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
-    ) as writer:
-        fetch_data(writer)
+    scrape()
