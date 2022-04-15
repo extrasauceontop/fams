@@ -1,155 +1,150 @@
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-from sgzip.dynamic import DynamicZipSearch, SearchableCountries, Grain_8
-from sgscrape import simple_scraper_pipeline as sp
-import json
-from bs4 import BeautifulSoup as bs
-import ssl
-
-ssl._create_default_https_context = ssl._create_unverified_context
-
-
-def get_driver(url, driver=None):
-    if driver is not None:
-        driver.quit()
-
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-            driver.get(url)
-
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
-
-    return driver
+import httpx
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgpostal.sgpostal import International_Parser, parse_address
+import re
 
 
-def get_data():
-    search = DynamicZipSearch(
-        country_codes=[SearchableCountries.USA], granularity=Grain_8()
-    )
+def fetch_data(sgw: SgWriter):
+    with SgRequests() as http:
+        locator_domain = "https://www.sfera.com/"
+        api_url = "https://www.sfera.com/pl/stores"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+        }
+        r = http.get(url=api_url, headers=headers)
+        assert isinstance(r, httpx.Response)
+        assert 200 == r.status_code
+        tree = html.fromstring(r.text)
+        div = "".join(
+            tree.xpath(
+                '//script[contains(text(), "location3 = new woosmap.map.LatLng(")]/text()'
+            )
+        ).split("location3 = new woosmap.map.LatLng(")[1:]
+        for d in div:
+            latitude = d.split(",")[0].strip()
+            longitude = d.split(",")[1].split(")")[0].strip()
+            location_name = d.split("title:")[1].split(",")[0].replace("'", "").strip()
 
-    start = 0
-    for zip_code in search:
-        data_url = (
-            "https://prismahealth.org/api/search/search?pageSize=100&pageNumber=1&searchType=location&zip="
-            + zip_code
-            + "&radius=1000"
-        )
-
-        if start == 0:
-
-            driver = get_driver(data_url)
-            source = driver.page_source
-            soup = bs(source, "html.parser")
-            text = soup.text.strip()
-            response_json = json.loads(text)
-            start = 1
-
-        else:
-            try:
-                driver.get(data_url)
-                source = driver.page_source
-                soup = bs(source, "html.parser")
-                text = soup.text.strip()
-                response_json = json.loads(text)
-
-            except Exception:
-                driver = get_driver(data_url)
-                source = driver.page_source
-                soup = bs(source, "html.parser")
-                text = soup.text.strip()
-                response_json = json.loads(text)
-
-        locations = response_json["Items"]
-
-        for location in locations:
-            locator_domain = "prismahealth.org"
-            page_url = data_url
-            location_name = location["Title"]
-
-            address = location["Address"][0] + " " + location["Address"][1]
-
-            city = location["Address"][2].split(",")[0]
-            state = location["Address"][2].split(" ")[-2]
-            zipp = location["Address"][2].split(" ")[-1]
-
-            country_code = "US"
-            store_number = location["Id"].split(";")[0]
-
-            phone = location["Phone"]
-            location_type = "<MISSING>"
-            latitude = location["Coordinate"]["Latitude"]
-            longitude = location["Coordinate"]["Longitude"]
-            search.found_location_at(latitude, longitude)
-            hours = "<MISSING>"
-
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
+            headers = {
+                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
+                "Accept": "*/*",
+                "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+                "X-Requested-With": "XMLHttpRequest",
+                "Origin": "https://www.sfera.com",
+                "Connection": "keep-alive",
+                "Referer": "https://www.sfera.com/ae/stores/",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Site": "same-origin",
+                "TE": "trailers",
             }
+            data = {
+                "lat": f"{latitude}",
+                "lng": f"{longitude}",
+                "cont": "1",
+                "entrada": "1",
+                "busca": f"{location_name}",
+            }
+            api_url_1 = "https://www.sfera.com/one/mod/tiendas_ajax.php"
+
+            r = http.post(url=api_url_1, headers=headers, data=data)
+            assert isinstance(r, httpx.Response)
+            assert 200 == r.status_code
+            tree = html.fromstring(r.text)
+            divs = tree.xpath('//div[contains(@id, "tiendas_obj")]')
+            for li in divs:
+                ad = (
+                    "".join(li.xpath("./div[1]/following-sibling::text()[1]"))
+                    .replace("\n", "")
+                    .strip()
+                )
+                ad = " ".join(ad.split())
+                page_url = f"https://www.sfera.com/pl/stores/?tiendas_buscar={location_name}&coord={latitude}@@{longitude}"
+                a = parse_address(International_Parser(), ad)
+                street_address = (
+                    f"{a.street_address_1} {a.street_address_2}".replace(
+                        "None", ""
+                    ).strip()
+                    or "<MISSING>"
+                )
+                if street_address == "<MISSING>" or street_address.isdigit():
+                    street_address = ad
+                state = a.state or "<MISSING>"
+                postal = a.postcode or "<MISSING>"
+                country_code = a.country or "<MISSING>"
+                city = a.city or "<MISSING>"
+
+                phone = (
+                    "".join(li.xpath('.//span[@class="tientextos2"]/text()'))
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                try:
+                    latitude = "".join(li.xpath(".//@onclick")).split(",")[1].strip()
+                    longitude = (
+                        "".join(li.xpath(".//@onclick"))
+                        .split(",")[2]
+                        .split(")")[0]
+                        .strip()
+                    )
+                except:
+                    latitude, longitude = "<MISSING>", "<MISSING>"
+                hours_of_operation = (
+                    " ".join(
+                        li.xpath(
+                            './/span[@class="tientextos2"]/following-sibling::text()'
+                        )
+                    )
+                    .replace("\n", "")
+                    .strip()
+                    or "<MISSING>"
+                )
+                hours_of_operation = " ".join(hours_of_operation.split())
+
+                if city == "<MISSING>":
+                    city = ""
+                    city_parts = ad.split(" - ")[-2].split(" ")
+
+                    for part in city_parts:
+                        if bool(re.search(r'\d', part)) is False:
+                            city = city + part + " "
+                
+                city = city.strip()
+
+                row = SgRecord(
+                    locator_domain=locator_domain,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code=country_code,
+                    store_number=SgRecord.MISSING,
+                    phone=phone,
+                    location_type=SgRecord.MISSING,
+                    latitude=latitude,
+                    longitude=longitude,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=ad,
+                )
+
+                sgw.write_row(row)
 
 
-def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.MappingField(mapping=["locator_domain"]),
-        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
-        location_name=sp.MappingField(
-            mapping=["location_name"], part_of_record_identity=True
-        ),
-        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
-        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
-        street_address=sp.MultiMappingField(
-            mapping=["street_address"], is_required=False
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(mapping=["state"], is_required=False),
-        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
-        country_code=sp.MappingField(mapping=["country_code"]),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(
-            mapping=["store_number"], part_of_record_identity=True
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
-    )
-
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="Crawler",
-        data_fetcher=get_data,
-        field_definitions=field_defs,
-        log_stats_interval=15,
-    )
-    pipeline.run()
-
-
-scrape()
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.RAW_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
