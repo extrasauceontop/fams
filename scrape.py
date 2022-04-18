@@ -31,6 +31,8 @@ def fetch_data():
             if lurl not in locs:
                 locs.append(lurl.replace("localhost:4503", "www.ihg.com/").replace("http:", "https:"))
     for loc in locs:
+        if loc == "https://www.ihg.com/www.kimptonhotels.com/shinjuku":
+            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/shinjuku-hotel-tokyo-japan/tyosj/hoteldetail?fromRedirect=true&qSrt=sBR&qSlH=tyosj&setPMCookies=true&qSHBrC=KI&qDest=3%20Chome-4-7%20Nishishinjuku,%20Tokyo,%20JP&srb_u=1"
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         website = "kimptonhotels.com"
