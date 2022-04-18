@@ -1,4 +1,4 @@
-from sgrequests import SgRequests
+from sgrequests import SgRequests, ProxySettings
 from sglogging import SgLogSetup
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
@@ -8,7 +8,7 @@ import os
 
 logger = SgLogSetup().get_logger("kimptonhotels_com")
 
-session = SgRequests()
+session = SgRequests(ProxySettings.TEST_PROXY_ESCALATION_ORDER)
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
 }
