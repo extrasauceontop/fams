@@ -20,6 +20,7 @@ def fetch_data():
     brand = "kimptonhotels"
     brand_string = brand + ".en.hoteldetail.xml"
     smurl = ""
+    print(r.status_code)
     for line in r.iter_lines():
         if brand_string in line:
             smurl = line.split("<loc>")[1].split("<")[0]
