@@ -54,7 +54,9 @@ def fetch_data():
             break
 
         except Exception:
-            session.set_proxy_url(proxy_url)
+            session = None
+            session = SgRequests(ProxySettings.TEST_PROXY_ESCALATION_ORDER)
+
 
     for line in r.iter_lines():
         if 'hreflang="en" rel="alternate">' in line:
