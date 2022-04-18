@@ -29,7 +29,7 @@ def fetch_data():
         if 'hreflang="en" rel="alternate">' in line:
             lurl = line.split('href="')[1].split('"')[0]
             if lurl not in locs:
-                locs.append(lurl.replace("localhost:4503", "www.ihg.com/").replace("http:", "https:"))
+                locs.append(lurl)
     for loc in locs:
         if loc == "https://www.ihg.com/www.kimptonhotels.com/shinjuku":
             loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/shinjuku-hotel-tokyo-japan/tyosj/hoteldetail?fromRedirect=true&qSrt=sBR&qSlH=tyosj&setPMCookies=true&qSHBrC=KI&qDest=3%20Chome-4-7%20Nishishinjuku,%20Tokyo,%20JP&srb_u=1"
