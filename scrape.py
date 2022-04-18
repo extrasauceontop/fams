@@ -81,6 +81,7 @@ def fetch_data():
                 break
 
             except Exception:
+                print(r2.status_code)
                 session = None
                 session = SgRequests(ProxySettings.TEST_PROXY_ESCALATION_ORDER)
                 continue
