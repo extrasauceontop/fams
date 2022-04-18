@@ -3,7 +3,9 @@ from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 from sglogging import SgLogSetup
 from sgscrape import simple_scraper_pipeline as sp
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 logger = SgLogSetup().get_logger("kimptonhotels_com")
 
 
