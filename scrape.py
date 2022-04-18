@@ -4,6 +4,7 @@ from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
+import os
 
 logger = SgLogSetup().get_logger("kimptonhotels_com")
 
@@ -14,17 +15,47 @@ headers = {
 
 
 def fetch_data():
+    proxy_url = os.getenv("PROXY_URL")
     locs = []
     url = "https://www.ihg.com/bin/sitemapindex.xml"
-    r = session.get(url, headers=headers)
+    
+    x = 0
+    while True:
+        x = x+1
+        if x == 10:
+            raise Exception
+        try:
+            r = session.get(url, headers=headers)
+            if r.status_code != 200:
+                raise Exception
+            
+            break
+
+        except Exception:
+            session.set_proxy_url(proxy_url)
+
     brand = "kimptonhotels"
     brand_string = brand + ".en.hoteldetail.xml"
     smurl = ""
-    print(r.status_code)
+
     for line in r.iter_lines():
         if brand_string in line:
             smurl = line.split("<loc>")[1].split("<")[0]
-    r = session.get(smurl, headers=headers)
+    
+    while True:
+        x = x+1
+        if x == 10:
+            raise Exception
+        try:
+            r = session.get(smurl, headers=headers)
+            if r.status_code != 200:
+                raise Exception
+            
+            break
+
+        except Exception:
+            session.set_proxy_url(proxy_url)
+
     for line in r.iter_lines():
         if 'hreflang="en" rel="alternate">' in line:
             lurl = line.split('href="')[1].split('"')[0]
@@ -32,7 +63,21 @@ def fetch_data():
                 locs.append(lurl.replace("localhost:4503", ""))
     for loc in locs:
         logger.info(loc)
-        r2 = session.get(loc, headers=headers)
+        x = 0
+        while True:
+            x = x+1
+            if x == 10:
+                raise Exception
+            try:
+                r2 = session.get(loc, headers=headers)
+                if r.status_code != 200:
+                    raise Exception
+                
+                break
+
+            except Exception:
+                session.set_proxy_url(proxy_url)
+
         website = "kimptonhotels.com"
         name = ""
         city = ""
