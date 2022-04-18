@@ -29,10 +29,17 @@ def fetch_data():
         if 'hreflang="en" rel="alternate">' in line:
             lurl = line.split('href="')[1].split('"')[0]
             if lurl not in locs:
-                locs.append(lurl)
+                locs.append(lurl.replace("localhost:4503www.", "www.ihg.com/"))
     for loc in locs:
-        if loc == "https://www.ihg.com/www.kimptonhotels.com/shinjuku":
-            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/shinjuku-hotel-tokyo-japan/tyosj/hoteldetail?fromRedirect=true&qSrt=sBR&qSlH=tyosj&setPMCookies=true&qSHBrC=KI&qDest=3%20Chome-4-7%20Nishishinjuku,%20Tokyo,%20JP&srb_u=1"
+        if loc == "http://www.ihg.com/kimptonhotels.com/shinjuku":
+            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/shinjuku-hotel-tokyo-japan/tyosj/hoteldetail"
+        
+        if loc == "http://www.ihg.com/kimptonhotels.com/shinjuku":
+            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/shinjuku-hotel-tokyo-japan/tyosj/hoteldetail"
+
+        if loc == "http://www.ihg.com/kimptonhotels.com/maa-laibangkok":
+            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/maa-lai-bangkok-thailand/bkkls/hoteldetail"
+
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
         website = "kimptonhotels.com"
