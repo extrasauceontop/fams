@@ -71,13 +71,14 @@ def fetch_data():
                 raise Exception
             try:
                 r2 = session.get(loc, headers=headers)
-                if r.status_code != 200:
+                if r2.status_code != 200:
                     raise Exception
                 
                 break
 
             except Exception:
                 session.set_proxy_url(proxy_url)
+                continue
 
         website = "kimptonhotels.com"
         name = ""
