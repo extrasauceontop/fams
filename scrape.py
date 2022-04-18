@@ -32,7 +32,8 @@ def fetch_data():
             break
 
         except Exception:
-            session.set_proxy_url(proxy_url)
+            session = None
+            session = SgRequests(ProxySettings.TEST_PROXY_ESCALATION_ORDER)
 
     brand = "kimptonhotels"
     brand_string = brand + ".en.hoteldetail.xml"
@@ -79,7 +80,8 @@ def fetch_data():
                 break
 
             except Exception:
-                session.set_proxy_url(proxy_url)
+                session = None
+                session = SgRequests(ProxySettings.TEST_PROXY_ESCALATION_ORDER)
                 continue
 
         website = "kimptonhotels.com"
