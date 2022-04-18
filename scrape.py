@@ -171,10 +171,11 @@ def fetch_data():
 
 
 def scrape():
+    print("there")
     results = fetch_data()
     with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
         for rec in results:
             writer.write_row(rec)
 
-
+print("hello")
 scrape()
