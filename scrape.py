@@ -29,7 +29,7 @@ def fetch_data():
         if 'hreflang="en" rel="alternate">' in line:
             lurl = line.split('href="')[1].split('"')[0]
             if lurl not in locs:
-                locs.append(lurl.replace("localhost:4503", "www.ihg.com/"))
+                locs.append(lurl.replace("localhost:4503", "www.ihg.com/").replace("http:", "https:"))
     for loc in locs:
         logger.info(loc)
         r2 = session.get(loc, headers=headers)
