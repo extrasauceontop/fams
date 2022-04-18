@@ -65,6 +65,7 @@ def fetch_data():
         logger.info(loc)
         x = 0
         while True:
+            print("here")
             x = x+1
             if x == 10:
                 raise Exception
