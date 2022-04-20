@@ -60,8 +60,6 @@ def get_data():
             "search_zip": "",
         }
 
-        data = session.post(post_url, data=frm).json()
-
         data = session.post(post_url, data=frm)
         if data.status_code != 200:
             continue
