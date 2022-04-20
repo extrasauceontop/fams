@@ -42,7 +42,7 @@ def get_data():
     for search_x, search_y in search:
         count = count + 1
         print(count)
-        if count == 1000:
+        if count == 100:
             break
 
         frm = {
