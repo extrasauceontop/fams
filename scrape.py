@@ -40,7 +40,7 @@ def get_data():
     count = 0
     for search_x, search_y in search:
         count = count + 1
-        if count == 100:
+        if count == 1000:
             break
 
         frm = {
@@ -50,10 +50,10 @@ def get_data():
             "online": "noSelect",
             "cx": search_x,
             "cy": search_y,
-            "xmin": str(float(search_x) - 10000.00),
-            "xmax": str(float(search_y) + 10000.00),
-            "ymin": str(float(search_x) - 10000.0),
-            "ymax": str(float(search_y) + 10000.0),
+            "xmin": str(float(search_x) - 1000000.00),
+            "xmax": str(float(search_y) + 1000000.00),
+            "ymin": str(float(search_x) - 1000000.0),
+            "ymax": str(float(search_y) + 1000000.0),
             "scaleId": "5",
             "isscale": "0",
             "code": "",
