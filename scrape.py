@@ -41,6 +41,7 @@ def get_data():
     count = 0
     for search_x, search_y in search:
         count = count + 1
+        print(count)
         if count == 1000:
             break
 
@@ -65,7 +66,7 @@ def get_data():
         if data.status_code != 200:
             continue
         data = data.json()
-
+        print(len(data["classroomList"]))
         for poi in data["classroomList"]:
             page_url = f"https://www.kumon.ne.jp/enter/search/classroom/{poi['cid']}/index.html".lower()
             if page_url in page_urls:
