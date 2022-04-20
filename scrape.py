@@ -5,6 +5,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
+
+crawl_state = CrawlStateSingleton.get_instance()
 
 
 def create_coords():
@@ -17,29 +20,30 @@ def create_coords():
     increment = 750
 
     x = left
-    coordinate_pairs = []
     while x < right:
         y = bottom
         while y < top:
-            coord_pair = [x,y]
-            coordinate_pairs.append(coord_pair)
-
+            coord_pair = str(x) + "," + str(y)
+            crawl_state.push_request(SerializableRequest(url=coord_pair))
             y = y+increment
         x = x+increment
     
-    return coordinate_pairs
+    crawl_state.set_misc_value("got_urls", True)
 
 
 def get_data():
     page_urls = []
     domain = "kumon.ne.jp"
-    search = create_coords()
+    search = crawl_state.request_stack_iter()
 
     session = SgRequests()
     post_url = "https://www.kumon.ne.jp/enter/search/classroom_search.php"
 
     count = 0
-    for search_x, search_y in search:
+    for coord_pair in search:
+        text = coord_pair.url
+        search_x = text.split(",")[0]
+        search_y = text.split(",")[1]
         count = count + 1
         print(count)
         if count == 100:
@@ -106,6 +110,8 @@ def get_data():
 
 
 def scrape():
+    if not crawl_state.get_misc_value("got_urls"):
+        create_coords()
     with SgWriter(
         SgRecordDeduper(
             SgRecordID(
