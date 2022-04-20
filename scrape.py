@@ -1,143 +1,118 @@
 from sgrequests import SgRequests
-from sglogging import SgLogSetup
-from sgscrape.sgwriter import SgWriter
+from sgpostal.sgpostal import parse_address_intl
+from lxml import etree
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import RecommendedRecordIds
-import time
-
-logger = SgLogSetup().get_logger("kimptonhotels_com")
-
-session = SgRequests()
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
-}
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
-def fetch_data():
-    locs = []
-    url = "https://www.ihg.com/bin/sitemapindex.xml"
-    r = session.get(url, headers=headers)
-    brand = "kimptonhotels"
-    brand_string = brand + ".en.hoteldetail.xml"
-    smurl = ""
-    for line in r.iter_lines():
-        if brand_string in line:
-            smurl = line.split("<loc>")[1].split("<")[0]
-    r = session.get(smurl, headers=headers)
-    for line in r.iter_lines():
-        if 'hreflang="en" rel="alternate">' in line:
-            lurl = line.split('href="')[1].split('"')[0]
-            if lurl not in locs:
-                locs.append(lurl.replace("localhost:4503www.", "www.ihg.com/"))
-    for loc in locs:
-        if loc == "http://www.ihg.com/kimptonhotels.com/shinjuku":
-            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/shinjuku-hotel-tokyo-japan/tyosj/hoteldetail"
-        
-        if loc == "http://www.ihg.com/kimptonhotels.com/shinjuku":
-            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/shinjuku-hotel-tokyo-japan/tyosj/hoteldetail"
+def create_coords():
+    left = 446685
+    right = 524883
 
-        if loc == "http://www.ihg.com/kimptonhotels.com/maa-laibangkok":
-            loc = "https://www.ihg.com/kimptonhotels/hotels/us/en/maa-lai-bangkok-thailand/bkkls/hoteldetail"
+    top = 164000
+    bottom = 87605
+    
+    increment = 750
 
-        logger.info(loc)
-        r2 = session.get(loc, headers=headers)
-        website = "kimptonhotels.com"
-        name = ""
-        city = ""
-        state = ""
-        country = ""
-        add = ""
-        zc = ""
-        typ = "Hotel"
-        phone = ""
-        hours = "<MISSING>"
-        lat = ""
-        lng = ""
-        rawadd = ""
-        store = loc.split("/hoteldetail")[0].rsplit("/", 1)[1]
-        for line2 in r2.iter_lines():
-            if 'property="og:title" content="' in line2 and name == "":
-                name = line2.split('property="og:title" content="')[1].split('"')[0]
-            if '<span class="visible-content">' in line2 and rawadd == "":
-                rawadd = line2.split('<span class="visible-content">')[1].split(
-                    "</span>"
-                )[0]
-                country = rawadd.rsplit("<br/>", 1)[1]
-                add = rawadd.split("<br/>")[0]
-                if rawadd.count("<br/>") == 3:
-                    add = add + " " + rawadd.split("<br/>")[1]
-                    city = rawadd.split("<br/>")[2].rsplit(" ", 1)[0]
-                    state = "<MISSING>"
-                    zc = rawadd.split("<br/>")[2].rsplit(" ", 1)[1]
-                else:
-                    zc = rawadd.split("<br/>")[1].rsplit(" ", 1)[1]
-                    city = rawadd.split("<br/>")[1].rsplit(" ", 1)[0]
-            if 'property="place:location:latitude"' in line2:
-                lat = (
-                    line2.split('property="place:location:latitude')[1]
-                    .split('content="')[1]
-                    .split('"')[0]
-                )
-            if 'property="place:location:longitude"' in line2:
-                lng = (
-                    line2.split('property="place:location:longitude"')[1]
-                    .split('content="')[1]
-                    .split('"')[0]
-                )
-            if phone == "" and '<a href="tel:' in line2:
-                phone = line2.split('<a href="tel:')[1].split('"')[0]
-        if " Hotels" not in name and name != "":
-            if country == "United States":
-                state = city.rsplit(" ", 1)[1]
-                city = city.rsplit(" ", 1)[0]
-            if state == "":
-                state = "<MISSING>"
-            if country == "United Kingdom":
-                state = "<MISSING>"
-            if country == "Canada":
-                state = city.split(" ")[1]
-                zc = city.rsplit(" ", 1)[1] + " " + zc
-                city = city.split(" ")[1]
-            if country == "United Kingdom":
-                state = "<MISSING>"
-                zc = city.rsplit(" ", 1)[1] + " " + zc
-                city = city.split(" ")[1]
-            if "-toronto-on" in loc:
-                city = "Toronto"
-            if "glasgow-uk" in loc:
-                city = "Glasgow"
-            if "10" in city:
-                city = city.split("10")[0].strip()
-            if "edinburgh-uk" in loc:
-                city = "Edinburgh"
-            if "manchester-uk" in loc:
-                city = "Manchester"
-            if "-london-hotel-uk" in loc:
-                city = "London"
-            yield SgRecord(
-                locator_domain=website,
-                page_url=loc,
-                location_name=name,
-                street_address=add,
-                city=city,
-                state=state,
-                zip_postal=zc,
-                country_code=country,
-                phone=phone,
-                location_type=typ,
-                store_number=store,
-                latitude=lat,
-                longitude=lng,
-                hours_of_operation=hours,
+    x = left
+    coordinate_pairs = []
+    while x < right:
+        y = bottom
+        while y < top:
+            coord_pair = [x,y]
+            coordinate_pairs.append(coord_pair)
+
+            y = y+increment
+        x = x+increment
+    
+    return coordinate_pairs
+
+
+def get_data():
+    domain = "kumon.ne.jp"
+    search = create_coords()
+
+    session = SgRequests()
+    post_url = "https://www.kumon.ne.jp/enter/search/classroom_search.php"
+
+    count = 0
+    for search_x, search_y in search:
+        count = count + 1
+        if count == 100:
+            break
+
+        frm = {
+            "age": "noSelect",
+            "open": "noSelect",
+            "searchAddress": "",
+            "online": "noSelect",
+            "cx": search_x,
+            "cy": search_y,
+            "xmin": str(float(search_x) - 10000.00),
+            "xmax": str(float(search_y) + 10000.00),
+            "ymin": str(float(search_x) - 10000.0),
+            "ymax": str(float(search_y) + 10000.0),
+            "scaleId": "5",
+            "isscale": "0",
+            "code": "",
+            "search_zip": "",
+        }
+
+        data = session.post(post_url, data=frm).json()
+
+        data = session.post(post_url, data=frm)
+        if data.status_code != 200:
+            continue
+        data = data.json()
+        for poi in data["classroomList"]:
+            page_url = f"https://www.kumon.ne.jp/enter/search/classroom/{poi['cid']}/index.html".lower()
+            raw_address = poi["addr"] + poi["saddr"]
+            addr = parse_address_intl(raw_address)
+            street_address = addr.street_address_1
+            if addr.street_address_2:
+                street_address += ", " + addr.street_address_2
+            loc_response = session.get(page_url)
+            if loc_response.status_code != 200:
+                continue
+            loc_dom = etree.HTML(loc_response.text)
+            hoo = loc_dom.xpath('//div[@class="days"]//text()')
+            hoo = " ".join([e.strip() for e in hoo if e.strip()])
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["rname"] + "教室",
+                street_address=street_address,
+                city=addr.city,
+                state=addr.state,
+                zip_postal=poi["yubno"],
+                country_code=addr.country,
+                store_number=poi["id"],
+                phone=poi["ktelno"],
+                location_type="",
+                latitude="",
+                longitude="",
+                hours_of_operation=hoo,
+                raw_address=raw_address,
             )
+
+            yield item
 
 
 def scrape():
-    results = fetch_data()
-    with SgWriter(deduper=SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
-        for rec in results:
-            writer.write_row(rec)
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.PAGE_URL}
+            ),
+            duplicate_streak_failure_factor=-1,
+        )
+    ) as writer:
+        for item in get_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
