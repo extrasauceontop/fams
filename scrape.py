@@ -31,6 +31,7 @@ def create_coords():
 
 
 def get_data():
+    page_urls = []
     domain = "kumon.ne.jp"
     search = create_coords()
 
@@ -64,8 +65,12 @@ def get_data():
         if data.status_code != 200:
             continue
         data = data.json()
+
         for poi in data["classroomList"]:
             page_url = f"https://www.kumon.ne.jp/enter/search/classroom/{poi['cid']}/index.html".lower()
+            if page_url in page_urls:
+                continue
+            page_urls.append(page_url)
             raw_address = poi["addr"] + poi["saddr"]
             addr = parse_address_intl(raw_address)
             street_address = addr.street_address_1
