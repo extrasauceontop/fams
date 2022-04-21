@@ -1,128 +1,83 @@
-from sgrequests import SgRequests
-from sgpostal.sgpostal import parse_address_intl
-from lxml import etree
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
+from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
-
-crawl_state = CrawlStateSingleton.get_instance()
-
-
-def create_coords():
-    left = 446685
-    right = 524883
-
-    top = 164000
-    bottom = 87605
-    
-    increment = 750
-
-    x = left
-    while x < right:
-        y = bottom
-        while y < top:
-            coord_pair = str(x) + "," + str(y)
-            crawl_state.push_request(SerializableRequest(url=coord_pair))
-            y = y+increment
-        x = x+increment
-    
-    crawl_state.set_misc_value("got_urls", True)
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import RecommendedRecordIds
 
 
-def get_data():
-    page_urls = []
-    domain = "kumon.ne.jp"
-    search = crawl_state.request_stack_iter()
+def clean_phone(text):
+    text = text.lower()
+    replace_list = ["(", ")", ".", "tel", ":", "+"]
+    black_list = ["e", "x", "d"]
+    for r in replace_list:
+        text = text.replace(r, "").strip()
+    for b in black_list:
+        if b in text:
+            text = text.split(b)[0].strip()
 
-    session = SgRequests()
-    post_url = "https://www.kumon.ne.jp/enter/search/classroom_search.php"
-
-    count = 0
-    for coord_pair in search:
-        text = coord_pair.url
-        search_x = text.split(",")[0]
-        search_y = text.split(",")[1]
-        count = count + 1
-        print(count)
-        if count == 100:
-            break
-
-        frm = {
-            "age": "noSelect",
-            "open": "noSelect",
-            "searchAddress": "",
-            "online": "noSelect",
-            "cx": search_x,
-            "cy": search_y,
-            "xmin": str(float(search_x) - 1000000.00),
-            "xmax": str(float(search_y) + 1000000.00),
-            "ymin": str(float(search_x) - 1000000.0),
-            "ymax": str(float(search_y) + 1000000.0),
-            "scaleId": "5",
-            "isscale": "0",
-            "code": "",
-            "search_zip": "",
-        }
-
-        data = session.post(post_url, data=frm)
-        if data.status_code != 200:
-            continue
-        data = data.json()
-        print(len(data["classroomList"]))
-        for poi in data["classroomList"]:
-            page_url = f"https://www.kumon.ne.jp/enter/search/classroom/{poi['cid']}/index.html".lower()
-            if page_url in page_urls:
-                continue
-            page_urls.append(page_url)
-            raw_address = poi["addr"] + poi["saddr"]
-            addr = parse_address_intl(raw_address)
-            street_address = addr.street_address_1
-            if addr.street_address_2:
-                street_address += ", " + addr.street_address_2
-            loc_response = session.get(page_url)
-            if loc_response.status_code != 200:
-                continue
-            loc_dom = etree.HTML(loc_response.text)
-            hoo = loc_dom.xpath('//div[@class="days"]//text()')
-            hoo = " ".join([e.strip() for e in hoo if e.strip()])
-
-            item = SgRecord(
-                locator_domain=domain,
-                page_url=page_url,
-                location_name=poi["rname"] + "教室",
-                street_address=street_address,
-                city=addr.city,
-                state=addr.state,
-                zip_postal=poi["yubno"],
-                country_code=addr.country,
-                store_number=poi["id"],
-                phone=poi["ktelno"],
-                location_type="",
-                latitude="",
-                longitude="",
-                hours_of_operation=hoo,
-                raw_address=raw_address,
-            )
-
-            yield item
+    return text
 
 
-def scrape():
-    if not crawl_state.get_misc_value("got_urls"):
-        create_coords()
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS, SgRecord.Headers.PAGE_URL}
-            ),
-            duplicate_streak_failure_factor=-1,
+def fetch_data(sgw: SgWriter):
+    api = "https://www.bobbibrowncosmetics.com/rpc/jsonrpc.tmpl"
+    r = session.post(api, headers=headers, params=params, data=data)
+    js = r.json()[0]["result"]["value"]["results"].values()
+
+    for j in js:
+        location_name = j.get("DOORNAME")
+        street_address = " ".join(
+            f'{j.get("ADDRESS")} {j.get("ADDRESS2") or ""}'.split()
         )
-    ) as writer:
-        for item in get_data():
-            writer.write_row(item)
+        city = j.get("CITY") or ""
+        state = j.get("STATE_OR_PROVINCE") or ""
+        postal = j.get("ZIP_OR_POSTAL") or ""
+        postal = postal.replace("-", "")
+        country = j.get("COUNTRY")
+        raw_address = " ".join(f"{street_address} {city} {state} {postal}".split())
+
+        phone = j.get("PHONE1") or ""
+        phone = clean_phone(phone)
+        latitude = j.get("LATITUDE")
+        longitude = j.get("LONGITUDE")
+        location_type = j.get("STORE_TYPE")
+        store_number = j.get("DOOR_ID")
+        hours_of_operation = j.get("STORE_HOURS")
+
+        row = SgRecord(
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=postal,
+            country_code=country,
+            location_type=location_type,
+            store_number=store_number,
+            phone=phone,
+            latitude=latitude,
+            longitude=longitude,
+            locator_domain=locator_domain,
+            hours_of_operation=hours_of_operation,
+            raw_address=raw_address,
+        )
+
+        sgw.write_row(row)
 
 
 if __name__ == "__main__":
-    scrape()
+    locator_domain = "https://www.bobbibrowncosmetics.com/"
+    page_url = "https://www.bobbibrowncosmetics.com/store_locator"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
+        "Accept": "*/*",
+    }
+
+    params = (("dbgmethod", "locator.doorsandevents"),)
+
+    data = {
+        "JSONRPC": '[{"method":"locator.doorsandevents","id":2,"params":[{"fields":"DOOR_ID, DOORNAME, EVENT_NAME, EVENT_START_DATE, EVENT_END_DATE, EVENT_IMAGE, EVENT_FEATURES, EVENT_TIMES, SERVICES, STORE_HOURS, ADDRESS, ADDRESS2, STATE_OR_PROVINCE, CITY, REGION, COUNTRY, ZIP_OR_POSTAL, PHONE1, STORE_TYPE, LONGITUDE, LATITUDE","radius":"","country":"United States","region_id":"0,47,27","latitude":33.0218117,"longitude":-97.12516989999999,"uom":"mile","_TOKEN":"b6a2036fda64fc609a1f77f72fcef03bdccde0f9,df93f53a98d3eac0d569475de97dc8d9e8fd3543,1650031353"}]}]',
+    }
+    session = SgRequests(proxy_country="de")
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
