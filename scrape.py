@@ -1,71 +1,93 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
-from sgrequests import SgRequests
+import os
 import ssl
+import json
+from lxml import html
+from sgscrape.sgrecord import SgRecord
+from sgrequests import SgRequests
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgrecord_deduper import SgRecordDeduper
 
-ssl._create_default_https_context = ssl._create_unverified_context
+
+os.environ[
+    "PROXY_URL"
+] = "http://groups-RESIDENTIAL,country-ru:{}@proxy.apify.com:8000/"
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
+def fetch_data(sgw: SgWriter):
 
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    locator_domain = "https://www.okmarket.ru"
+    api_url = "https://www.okmarket.ru/stores/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
+    }
+    r = session.get(api_url, headers=headers)
+    tree = html.fromstring(r.text)
+    jsblock = (
+        "".join(tree.xpath('//script[contains(text(), "JSON.parse")]/text()'))
+        .split('cityList":')[1]
+        .split(',"lang"')[0]
+        .strip()
     )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=False,
-            ).driver()
-            driver.get(url)
+    js = json.loads(jsblock)
+    for j in js:
+        ids = j.get("id")
+        city = j.get("name")
 
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
+        r = session.get(
+            f"https://www.okmarket.ru/ajax/map_filter/search/?lang=ru&city_id={ids}&type=shop",
+            headers=headers,
+        )
+        js = r.json()["data"]["shops"]
+        for j in js:
+
+            page_url = f"https://www.okmarket.ru{j.get('url')}"
+            location_name = j.get("name")
+            street_address = (
+                "".join(j.get("address"))
+                .replace("\r\n", " ")
+                .replace("\n", " ")
+                .strip()
             )
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
-    return driver
+            country_code = "RU"
+            latitude = j.get("coords").get("latitude")
+            longitude = j.get("coords").get("longitude")
+            try:
+                phone = j.get("phone")[0].get("label")
+            except:
+                phone = "<MISSING>"
+            hours_of_operation = j.get("time").get("label")
+
+            row = SgRecord(
+                locator_domain=locator_domain,
+                page_url=page_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=city,
+                state=SgRecord.MISSING,
+                zip_postal=SgRecord.MISSING,
+                country_code=country_code,
+                store_number=SgRecord.MISSING,
+                phone=phone,
+                location_type=SgRecord.MISSING,
+                latitude=latitude,
+                longitude=longitude,
+                hours_of_operation=hours_of_operation,
+            )
+
+            sgw.write_row(row)
 
 
-def reset_sessions(data_url):
-    s = SgRequests()
-
-    driver = get_driver(data_url, "main-menu__tab-button")
-
-    for request in driver.requests:
-
-        headers = request.headers
-        try:
-            response = s.get(data_url, headers=headers)
-            response_text = response.text
-
-            test_html = response_text.split("div")
-            if len(test_html) < 2:
-                continue
-            else:
-                driver.quit()
-                return [s, headers, response_text]
-
-        except Exception:
-            driver.quit()
-            continue
-
-
-url = "https://www.amegybank.com/"
-response = reset_sessions(url)[2]
-
-print(response)
+if __name__ == "__main__":
+    session = SgRequests()
+    with SgWriter(
+        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
+    ) as writer:
+        fetch_data(writer)
