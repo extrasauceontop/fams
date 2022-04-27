@@ -33,7 +33,8 @@ def get_data():
                 response = driver.page_source
 
                 break
-        except Exception:
+        except Exception as e:
+            print(e)
             continue
 
     soup = bs(response, "html.parser")
