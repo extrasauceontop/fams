@@ -37,7 +37,10 @@ def get_data():
 
                 break
         except Exception as e:
+            print(driver.page_source)
             print(e)
+            print("")
+            print("")
             continue
 
     soup = bs(response, "html.parser")
