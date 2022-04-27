@@ -83,7 +83,7 @@ def fetch_data():
 
 
     url = "https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=40.7895453&longitude=-74.05652980000002&countryCode=US&distanceUnit=mi&maxdistance=100000&BBW=1"
-    with SgChrome(executable_path=ChromeDriverManager().install(), user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0", is_headless=True).driver() as driver:
+    with SgChrome(user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0", is_headless=True).driver() as driver:
         driver.get(url)
         response = driver.page_source
         print(response)
