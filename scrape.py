@@ -86,6 +86,7 @@ def fetch_data():
     with SgChrome(executable_path=ChromeDriverManager().install(), user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0", is_headless=True).driver() as driver:
         driver.get(url)
         response = driver.page_source
+        print(response)
     
     json_objects = extract_json(response)
 
