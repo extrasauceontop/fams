@@ -5,6 +5,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
 from sgscrape import simple_scraper_pipeline as sp
 from webdriver_manager.chrome import ChromeDriverManager
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_data():
