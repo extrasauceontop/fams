@@ -3,3 +3,4 @@ selenium==3.141.0
 sgselenium==0.1.10
 beautifulsoup4==4.9.3
 sgscrape==0.2.9
+webdriver_manager==3.4.1
