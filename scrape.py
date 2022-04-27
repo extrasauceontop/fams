@@ -2,9 +2,9 @@ from bs4 import BeautifulSoup as bs
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
-from sgscrape import simple_scraper_pipeline as sp
+from sgselenium.sgselenium import SgFirefox
 from webdriver_manager.chrome import ChromeDriverManager
+from sgscrape import simple_scraper_pipeline as sp
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -18,29 +18,22 @@ def get_data():
 
     x = 0
     while True:
-        x = x + 1
+        x = x+1
         if x == 10:
             raise Exception
         try:
-            with SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver() as driver:
-                driver.get(url)
-                WebDriverWait(driver, 40).until(
-                    EC.presence_of_element_located(
-                        (By.CLASS_NAME, "text-color-primary")
-                    )
-                )
-                response = driver.page_source
+            driver = SgFirefox(user_agent=user_agent, is_headless=True).driver()
+            driver.get(url)
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "text-color-primary"))
+            )
+            response = driver.page_source
 
-                break
+            break
         except Exception as e:
-            print(driver.page_source)
-            print(e)
-            print("")
-            print("")
+            with open("file.txt", "w", encoding="utf-8") as output:
+                print(driver.page_source, file=output)
+
             continue
 
     soup = bs(response, "html.parser")
@@ -51,38 +44,22 @@ def get_data():
         location_name = grid.find("div").find("div").text.strip()
         address = grid.find("div").find_all("div")[1].text.strip()
         city = grid.find("div").find_all("div")[2].text.strip().split(", ")[0]
-        state = (
-            grid.find("div")
-            .find_all("div")[2]
-            .text.strip()
-            .split(", ")[1]
-            .split(" ")[0]
-        )
-        zipp = (
-            grid.find("div")
-            .find_all("div")[2]
-            .text.strip()
-            .split(", ")[1]
-            .split(" ")[1]
-        )
-        phone = (
-            grid.find("div", attrs={"class": "pb-3"})
-            .find("a")["href"]
-            .replace("tel:", "")
-        )
+        state = grid.find("div").find_all("div")[2].text.strip().split(", ")[1].split(" ")[0]
+        zipp = grid.find("div").find_all("div")[2].text.strip().split(", ")[1].split(" ")[1]
+        phone = grid.find("div", attrs={"class": "pb-3"}).find("a")["href"].replace("tel:", "")
         location_type = "<MISSING>"
         country_code = "US"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         store_number = "<MISSING>"
 
-        hours_parts = (
-            grid.find("div", attrs={"class": "pb-3"}).text.strip().replace("\n", "")
-        )
+        hours_parts = grid.find("div", attrs={"class": "pb-3"}).text.strip().replace("\n", "")
         while "  " in hours_parts:
             hours_parts = hours_parts.replace("  ", " ")
 
         hours_parts = hours_parts.split(phone[-3:])[1]
+        print(hours_parts)
+        
         hours = "MM"
 
         yield {
@@ -101,6 +78,7 @@ def get_data():
             "hours": hours,
             "country_code": country_code,
         }
+
 
 
 def scrape():
