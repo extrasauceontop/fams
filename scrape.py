@@ -28,7 +28,7 @@ def get_data():
                 is_headless=True,
             ).driver() as driver:
                 driver.get(url)
-                WebDriverWait(driver, 20).until(
+                WebDriverWait(driver, 40).until(
                     EC.presence_of_element_located(
                         (By.CLASS_NAME, "text-color-primary")
                     )
