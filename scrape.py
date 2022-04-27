@@ -1,94 +1,134 @@
-import os
-import ssl
-import json
-from lxml import html
-from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgrecord_deduper import SgRecordDeduper
+from bs4 import BeautifulSoup as bs
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from sgselenium.sgselenium import SgChrome
+from sgscrape import simple_scraper_pipeline as sp
+from webdriver_manager.chrome import ChromeDriverManager
 
 
-os.environ[
-    "PROXY_URL"
-] = "http://groups-RESIDENTIAL,country-ru:{}@proxy.apify.com:8000/"
-
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
-
-
-def fetch_data(sgw: SgWriter):
-
-    locator_domain = "https://www.okmarket.ru"
-    api_url = "https://www.okmarket.ru/stores/"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
-    }
-    r = session.get(api_url, headers=headers)
-    print(r.status_code)
-    tree = html.fromstring(r.text)
-    jsblock = (
-        "".join(tree.xpath('//script[contains(text(), "JSON.parse")]/text()'))
-        .split('cityList":')[1]
-        .split(',"lang"')[0]
-        .strip()
+def get_data():
+    url = "https://baddaddysburgerbar.com/find-us"
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     )
-    js = json.loads(jsblock)
-    for j in js:
-        ids = j.get("id")
-        city = j.get("name")
 
-        r = session.get(
-            f"https://www.okmarket.ru/ajax/map_filter/search/?lang=ru&city_id={ids}&type=shop",
-            headers=headers,
+    x = 0
+    while True:
+        x = x + 1
+        if x == 10:
+            raise Exception
+        try:
+            with SgChrome(
+                executable_path=ChromeDriverManager().install(),
+                user_agent=user_agent,
+                is_headless=True,
+            ).driver() as driver:
+                driver.get(url)
+                WebDriverWait(driver, 20).until(
+                    EC.presence_of_element_located(
+                        (By.CLASS_NAME, "text-color-primary")
+                    )
+                )
+                response = driver.page_source
+
+                break
+        except Exception:
+            continue
+
+    soup = bs(response, "html.parser")
+    grids = soup.find_all("div", attrs={"class": "h-fit-content"})
+    for grid in grids:
+        locator_domain = "baddaddysburgerbar.com"
+        page_url = grid.find_all("a")[-1]["href"]
+        location_name = grid.find("div").find("div").text.strip()
+        address = grid.find("div").find_all("div")[1].text.strip()
+        city = grid.find("div").find_all("div")[2].text.strip().split(", ")[0]
+        state = (
+            grid.find("div")
+            .find_all("div")[2]
+            .text.strip()
+            .split(", ")[1]
+            .split(" ")[0]
         )
-        js = r.json()["data"]["shops"]
-        for j in js:
+        zipp = (
+            grid.find("div")
+            .find_all("div")[2]
+            .text.strip()
+            .split(", ")[1]
+            .split(" ")[1]
+        )
+        phone = (
+            grid.find("div", attrs={"class": "pb-3"})
+            .find("a")["href"]
+            .replace("tel:", "")
+        )
+        location_type = "<MISSING>"
+        country_code = "US"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        store_number = "<MISSING>"
 
-            page_url = f"https://www.okmarket.ru{j.get('url')}"
-            location_name = j.get("name")
-            street_address = (
-                "".join(j.get("address"))
-                .replace("\r\n", " ")
-                .replace("\n", " ")
-                .strip()
-            )
-            country_code = "RU"
-            latitude = j.get("coords").get("latitude")
-            longitude = j.get("coords").get("longitude")
-            try:
-                phone = j.get("phone")[0].get("label")
-            except:
-                phone = "<MISSING>"
-            hours_of_operation = j.get("time").get("label")
+        hours_parts = (
+            grid.find("div", attrs={"class": "pb-3"}).text.strip().replace("\n", "")
+        )
+        while "  " in hours_parts:
+            hours_parts = hours_parts.replace("  ", " ")
 
-            row = SgRecord(
-                locator_domain=locator_domain,
-                page_url=page_url,
-                location_name=location_name,
-                street_address=street_address,
-                city=city,
-                state=SgRecord.MISSING,
-                zip_postal=SgRecord.MISSING,
-                country_code=country_code,
-                store_number=SgRecord.MISSING,
-                phone=phone,
-                location_type=SgRecord.MISSING,
-                latitude=latitude,
-                longitude=longitude,
-                hours_of_operation=hours_of_operation,
-            )
+        hours_parts = hours_parts.split(phone[-3:])[1]
+        hours = "MM"
 
-            sgw.write_row(row)
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
 
-if __name__ == "__main__":
-    session = SgRequests()
-    with SgWriter(
-        SgRecordDeduper(SgRecordID({SgRecord.Headers.STREET_ADDRESS}))
-    ) as writer:
-        fetch_data(writer)
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
+
+
+scrape()
