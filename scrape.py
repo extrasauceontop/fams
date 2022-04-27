@@ -7,6 +7,7 @@ from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChrome
 import ssl
+from webdriver_manager.chrome import ChromeDriverManager
 import json
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -82,7 +83,7 @@ def fetch_data():
 
 
     url = "https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=40.7895453&longitude=-74.05652980000002&countryCode=US&distanceUnit=mi&maxdistance=100000&BBW=1"
-    with SgChrome(is_headless=True).driver() as driver:
+    with SgChrome(executable_path=ChromeDriverManager().install(), user_agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0", is_headless=True).driver() as driver:
         driver.get(url)
         response = driver.page_source
     
