@@ -48,8 +48,6 @@ def get_data():
         driver.get(
             "https://api.dineengine.io/baddaddys/items/custom_pages?fields%5B0%5D=%2A.%2A.%2A.%2A&single=false&limit=-1"
         )
-        time.sleep(20)
-        print("here")
         print(driver.page_source)
         soup = bs(
             html.unescape(extract_json(driver.page_source)[0]["data"][6]["content"]),
