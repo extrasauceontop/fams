@@ -5,7 +5,6 @@ import html
 import json
 import ssl
 from webdriver_manager.chrome import ChromeDriverManager
-import time
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
