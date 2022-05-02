@@ -6,7 +6,7 @@ import json
 import ssl
 from webdriver_manager.chrome import ChromeDriverManager
 
-ssl._create_default_https_context = ssl._create_unverified_context
+# ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def extract_json(html_string):
