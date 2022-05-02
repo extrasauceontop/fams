@@ -40,7 +40,7 @@ def get_data():
     )
 
     with SgChrome(
-        executable_path=ChromeDriverManager().install(),
+        # executable_path=ChromeDriverManager().install(),
         user_agent=user_agent,
         is_headless=True,
     ).driver() as driver:
