@@ -1,3 +1,4 @@
+import sgselenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -7,6 +8,7 @@ from sgscrape import simple_scraper_pipeline as sp
 from selenium import webdriver
 import undetected_chromedriver as uc
 import ssl
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
