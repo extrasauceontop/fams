@@ -5,6 +5,7 @@ import html
 import json
 import ssl
 from webdriver_manager.chrome import ChromeDriverManager
+import time
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -40,13 +41,14 @@ def get_data():
     )
 
     with SgChrome(
-        # executable_path=ChromeDriverManager().install(),
+        executable_path=ChromeDriverManager().install(),
         user_agent=user_agent,
         is_headless=True,
     ).driver() as driver:
         driver.get(
             "https://api.dineengine.io/baddaddys/items/custom_pages?fields%5B0%5D=%2A.%2A.%2A.%2A&single=false&limit=-1"
         )
+        time.sleep(20)
         print(driver.page_source)
         soup = bs(
             html.unescape(extract_json(driver.page_source)[0]["data"][6]["content"]),
