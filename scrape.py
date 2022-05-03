@@ -1,64 +1,75 @@
-import sgselenium
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from bs4 import BeautifulSoup as bs
+from sgselenium import SgSelenium
+from sgselenium import SgChrome
+from sgrequests import SgRequests
+import json
 from sgscrape import simple_scraper_pipeline as sp
-from selenium import webdriver
-import undetected_chromedriver as uc
-import ssl
+from bs4 import BeautifulSoup as bs
 
 
-ssl._create_default_https_context = ssl._create_unverified_context
+def extract_json(html_string):
+    json_objects = []
+    count = 0
 
+    brace_count = 0
+    for element in html_string:
 
-def get_driver(url, class_name, driver=None):
-    options = webdriver.ChromeOptions()
-    options.add_argument("start-maximized")
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = uc.Chrome(
-        executable_path=ChromeDriverManager().install(), options=options
-    )
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
 
-    driver.get(url)
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
 
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.CLASS_NAME, class_name))
-    )
-    return driver
+    return json_objects
 
 
 def get_data():
-    url = "https://baddaddysburgerbar.com/find-us"
-    class_name = "text-color-primary"
-    with get_driver(url, class_name) as driver:
-        response = driver.page_source
-    
-    soup = bs(response, "html.parser")
-    grids = soup.find_all("div", attrs={"class": "h-fit-content"})
-    for grid in grids:
-        locator_domain = "baddaddysburgerbar.com"
-        page_url = grid.find_all("a")[-1]["href"]
-        location_name = grid.find("div").find("div").text.strip()
-        address = grid.find("div").find_all("div")[1].text.strip()
-        city = grid.find("div").find_all("div")[2].text.strip().split(", ")[0]
-        state = grid.find("div").find_all("div")[2].text.strip().split(", ")[1].split(" ")[0]
-        zipp = grid.find("div").find_all("div")[2].text.strip().split(", ")[1].split(" ")[1]
-        phone = grid.find("div", attrs={"class": "pb-3"}).find("a")["href"].replace("tel:", "")
-        location_type = "<MISSING>"
-        country_code = "US"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        store_number = "<MISSING>"
+    session = SgRequests()
 
-        hours_parts = grid.find("div", attrs={"class": "pb-3"}).text.strip().replace("\n", "")
-        while "  " in hours_parts:
-            hours_parts = hours_parts.replace("  ", " ")
-    
-        hours = hours_parts.split(phone[-3:])[1]
+    url = "https://www.extendedstayamerica.com/hotels/"
+    browser_headers = SgSelenium.get_default_headers_for(
+        the_driver=SgChrome().driver(), request_url=url
+    )
+    response = session.get(url, headers=browser_headers).text
+    json_objects = extract_json(response.split("window.esa.hotelsData = ")[1])
+
+    for location in json_objects:
+        locator_domain = "extendedstayamerica.com"
+        page_url = "https://www.extendedstayamerica.com" + location["urlMap"]
+        location_name = location["title"]
+        latitude = location["latitude"]
+        longitude = location["longitude"]
+        city = location["address"]["city"]
+        store_number = location["siteId"]
+        address = location["address"]["street"]
+        state = location["address"]["region"]
+        zipp = location["address"]["postalCode"]
+        location_type = "<MISSING>"
+        hours = "24/7"
+        country_code = "US"
+        try:
+            phone_response = session.get(page_url, headers=browser_headers).text
+            phone_soup = bs(phone_response, "html.parser")
+
+            phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
+
+        except Exception:
+            browser_headers = SgSelenium.get_default_headers_for(
+                the_driver=SgChrome().driver(), request_url=page_url
+            )
+            phone_response = session.get(page_url, headers=browser_headers).text
+            phone_soup = bs(phone_response, "html.parser")
+
+            phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
+
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,
