@@ -14,7 +14,7 @@ def get_driver(url, driver=None):
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     driver = uc.Chrome(
-        executable_path=ChromeDriverManager().install(), 
+        # executable_path=ChromeDriverManager().install(), 
         options=options
     )
 
