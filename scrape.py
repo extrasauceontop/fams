@@ -2,7 +2,9 @@
 from selenium import webdriver  # noqa
 import undetected_chromedriver as uc
 import time
-import json
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def get_driver(url, driver=None):
 
