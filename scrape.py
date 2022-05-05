@@ -1,4 +1,4 @@
-# from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium import webdriver  # noqa
 import undetected_chromedriver as uc
 import time
@@ -14,7 +14,7 @@ def get_driver(url, driver=None):
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     driver = uc.Chrome(
-        # executable_path=ChromeDriverManager().install(), 
+        executable_path=ChromeDriverManager().install(), 
         options=options
     )
 
