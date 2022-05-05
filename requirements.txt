@@ -2,5 +2,5 @@
 sgrequests==0.3.5
 lxml==4.6.2
 sgscrape==0.2.9
-sgselenium==0.2.5
+sgselenium==0.2.4
 sgvalidator==0.0.71
