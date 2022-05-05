@@ -1,7 +1,6 @@
 from sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 import time
-import json
 
 
 user_agent = (
