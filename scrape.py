@@ -5,11 +5,9 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-# from sgrequests import ProxySettings
 
 
 def fetch_data():
-    # session = SgRequests(proxy_escalation_order=ProxySettings.TEST_PROXY_ESCALATION_ORDER)
     session = SgRequests()
     start_url = "https://burtonsgrill.com/locations/"
     domain = "burtonsgrill.com"
@@ -18,7 +16,6 @@ def fetch_data():
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
     }
     response = session.get(start_url, headers=hdr)
-    print(response.text)
     dom = etree.HTML(response.text)
 
     all_locations = dom.xpath('//div[@class="locations-group"]//a/@href')
