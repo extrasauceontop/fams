@@ -41,12 +41,24 @@ def fetch_data():
             '//p[contains(text(), "Åpningstider:")]/following-sibling::p//text()'
         )[0].replace("g0", "g 0")
 
-        with SgFirefox() as driver:
-            driver.get(page_url)
-            sleep(5)
-            driver.switch_to.frame(driver.find_element_by_id("mapFrame"))
-            loc_dom = etree.HTML(driver.page_source)
-        raw_address = loc_dom.xpath('//div[@class="address"]/text()')[0]
+        x = 0
+        while True:
+            x = x+1
+            if x == 10:
+                print(loc_dom)
+                raise Exception
+            try:
+                with SgFirefox() as driver:
+                    driver.get(page_url)
+                    sleep(5)
+                    driver.switch_to.frame(driver.find_element_by_id("mapFrame"))
+                    loc_dom = etree.HTML(driver.page_source)
+                raw_address = loc_dom.xpath('//div[@class="address"]/text()')[0]
+                break
+
+            except Exception:
+                continue
+        
         # addr = parse_address_intl(raw_address)
         # street_address = addr.street_address_1
         # if addr.street_address_2:
