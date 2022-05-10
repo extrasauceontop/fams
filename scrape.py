@@ -5,6 +5,7 @@ from sgselenium.sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
+from webdriver_manager.chrome import ChromeDriverManager
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -16,6 +17,7 @@ def get_data():
     url = "https://www.simons.ca/en/stores/our-stores--a13090"
 
     with SgChrome(
+        executable_path=ChromeDriverManager().install(),
         user_agent=user_agent,
         is_headless=True,
     ).driver() as driver:
