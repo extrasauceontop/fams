@@ -1,173 +1,92 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from sgselenium.sgselenium import SgChrome
-from bs4 import BeautifulSoup as bs
-from sgscrape import simple_scraper_pipeline as sp
-import ssl
-from webdriver_manager.chrome import ChromeDriverManager
+# -*- coding: utf-8 -*-
+from time import sleep
+from lxml import etree
+from urllib.parse import urljoin
 
-ssl._create_default_https_context = ssl._create_unverified_context
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+# from sgpostal.sgpostal import parse_address_intl
+from sgselenium.sgselenium import SgFirefox
 
 
-def get_data():
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    url = "https://www.simons.ca/en/stores/our-stores--a13090"
+def fetch_data():
+    session = SgRequests()
 
-    with SgChrome(
-        executable_path=ChromeDriverManager().install(),
-        user_agent=user_agent,
-        is_headless=True,
-    ).driver() as driver:
-        driver.get(url)
+    start_url = "https://www.adecco.no/kontakt-oss/"
+    domain = "adecco.no"
+    hdr = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36"
+    }
+    response = session.get(start_url, headers=hdr)
+    dom = etree.HTML(response.text)
 
-        response = driver.page_source
-        soup = bs(response, "html.parser")
+    all_locations = dom.xpath('//div[@class="row text-left"]//a/@href')
+    for url in all_locations:
+        page_url = urljoin(start_url, url)
+        loc_response = session.get(page_url)
+        loc_dom = etree.HTML(loc_response.text)
 
-        a_tags = soup.find_all(
-            "a",
-            attrs={
-                "class": "simonsLandingStoreCardLink",
-            },
+        location_name = loc_dom.xpath("//h1/text()")[0]
+        phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')[-1]
+        geo = (
+            loc_dom.xpath('//iframe[@id="mapFrame"]/@src')[0]
+            .split("!2d")[-1]
+            .split("!2m")[0]
+            .split("!3d")
         )
-        class_name = "stores-title"
-        for a_tag in a_tags:
-            locator_domain = "simons.ca"
-            page_url = a_tag["href"]
+        hoo = loc_dom.xpath(
+            '//p[contains(text(), "Åpningstider:")]/following-sibling::p//text()'
+        )[0].replace("g0", "g 0")
 
+        with SgFirefox() as driver:
             driver.get(page_url)
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            location_response = driver.page_source
-            location_soup = bs(location_response.replace("<br>", "\n"), "html.parser")
+            sleep(5)
+            driver.switch_to.frame(driver.find_element_by_id("mapFrame"))
+            loc_dom = etree.HTML(driver.page_source)
+        raw_address = loc_dom.xpath('//div[@class="address"]/text()')[0]
+        # addr = parse_address_intl(raw_address)
+        # street_address = addr.street_address_1
+        # if addr.street_address_2:
+        #     street_address += " " + addr.street_address_2
+        street_address = "<LATER>"
+        city = "<LATER>"
+        zipp = "<LATER>"
 
-            location_name = location_soup.find(
-                "h1",
-                attrs={
-                    "class": "stores-title",
-                },
-            ).text.strip()
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state="",
+            zip_postal=zipp,
+            country_code="NO",
+            store_number="",
+            phone=phone,
+            location_type="",
+            latitude=geo[1],
+            longitude=geo[0],
+            hours_of_operation=hoo,
+            raw_address=raw_address,
+        )
 
-            lat_lon_parts = location_soup.find(
-                "a",
-                attrs={
-                    "class": "stores-mapLink",
-                },
-            )["href"]
-            try:
-                latitude = lat_lon_parts.split("@")[1].split(",")[0]
-                longitude = lat_lon_parts.split("@")[1].split(",")[1]
-            except Exception:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-            address_parts = (
-                location_soup.find(
-                    "p",
-                    attrs={
-                        "class": "stores-address",
-                    },
-                )
-                .text.strip()
-                .split("\n")
-            )
-
-            city = address_parts[-1].split(", ")[0]
-            store_number = "<MISSING>"
-            address = address_parts[0]
-            state = address_parts[-1].split(", ")[1].split(" ")[0]
-            zipp = "".join(
-                part + " " for part in address_parts[-1].split(", ")[1].split(" ")[1:]
-            )
-
-            phone = location_soup.find("a", attrs={"class": "stores-tel"})[
-                "href"
-            ].replace("tel:", "")
-            location_type = "<MISSING>"
-            country_code = "CA"
-
-            days = location_soup.find(
-                "div",
-                attrs={
-                    "class": "stores-hoursLeft",
-                },
-            ).find_all("p")
-            hours_parts = location_soup.find(
-                "div", attrs={"class": "stores-hoursRight"}
-            ).find_all("p")
-
-            hours = ""
-            for x in range(len(days)):
-                day = days[x].text.strip()
-                part = hours_parts[x].text.strip()
-
-                hours = hours + day + " " + part + ", "
-
-            hours = hours[:-2]
-
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+        yield item
 
 
 def scrape():
-    x = 0
-    while True:
-        x = x+1
-        if x == 10:
-            raise Exception
-        try:
-            field_defs = sp.SimpleScraperPipeline.field_definitions(
-                locator_domain=sp.MappingField(mapping=["locator_domain"]),
-                page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
-                location_name=sp.MappingField(
-                    mapping=["location_name"], part_of_record_identity=True
-                ),
-                latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
-                longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
-                street_address=sp.MultiMappingField(
-                    mapping=["street_address"], is_required=False
-                ),
-                city=sp.MappingField(
-                    mapping=["city"],
-                ),
-                state=sp.MappingField(mapping=["state"], is_required=False),
-                zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
-                country_code=sp.MappingField(mapping=["country_code"]),
-                phone=sp.MappingField(mapping=["phone"], is_required=False),
-                store_number=sp.MappingField(
-                    mapping=["store_number"], part_of_record_identity=True
-                ),
-                hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-                location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
             )
-
-            pipeline = sp.SimpleScraperPipeline(
-                scraper_name="Crawler",
-                data_fetcher=get_data,
-                field_definitions=field_defs,
-                log_stats_interval=15,
-            )
-            pipeline.run()
-            break
-        
-        except Exception:
-            continue
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
