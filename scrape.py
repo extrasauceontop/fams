@@ -4,7 +4,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
-# from sgpostal.sgpostal import parse_address_intl
+from sgpostal.sgpostal import parse_address_intl
 from sgselenium.sgselenium import SgChrome
 from webdriver_manager.chrome import ChromeDriverManager
 import ssl
@@ -37,7 +37,7 @@ def fetch_data():
                 continue
             raw_address = raw_address[0].split(", ")
             street_address = raw_address[0]
-            # addr = parse_address_intl(" ".join(raw_address))
+            addr = parse_address_intl(" ".join(raw_address))
             phone = loc_dom.xpath('//a[contains(@href, "tel")]/text()')
             phone = phone[0] if phone else ""
             geo = (
@@ -56,13 +56,13 @@ def fetch_data():
                 continue
 
             
-            # city=addr.city,
-            # state=addr.state,
-            # zip_postal=addr.postcode
+            city=addr.city,
+            state=addr.state,
+            zip_postal=addr.postcode
 
-            city = "<MISSING>"
-            state = "<MISSING"
-            zipp = "<MISSING>"
+            # city = "<MISSING>"
+            # state = "<MISSING"
+            # zipp = "<MISSING>"
 
             item = SgRecord(
                 locator_domain=domain,
