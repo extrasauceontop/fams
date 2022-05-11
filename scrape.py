@@ -58,7 +58,7 @@ def fetch_data():
             
             city=addr.city,
             state=addr.state,
-            zip_postal=addr.postcode
+            zipp=addr.postcode
 
             # city = "<MISSING>"
             # state = "<MISSING"
