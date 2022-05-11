@@ -6,7 +6,7 @@ from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
 from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
+# from webdriver_manager.chrome import ChromeDriverManager
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -18,8 +18,12 @@ def fetch_data():
     )
     start_url = "https://burtonsgrill.com/locations/"
     domain = "burtonsgrill.com"
-    
-    with SgChrome(executable_path=ChromeDriverManager().install(), user_agent=user_agent, is_headless=True).driver() as driver:
+
+    with SgChrome(
+        # executable_path=ChromeDriverManager().install(),
+        user_agent=user_agent,
+        is_headless=True,
+    ).driver() as driver:
         driver.get(start_url)
 
         dom = etree.HTML(driver.page_source)
@@ -33,7 +37,9 @@ def fetch_data():
             location_name = location_name[0] if location_name else ""
             raw_address = loc_dom.xpath('//a[contains(@href, "maps")]/text()')
             if not raw_address:
-                all_locations += loc_dom.xpath('//div[@class="locations-group"]//a/@href')
+                all_locations += loc_dom.xpath(
+                    '//div[@class="locations-group"]//a/@href'
+                )
                 continue
             raw_address = raw_address[0].split(", ")
             street_address = raw_address[0]
@@ -55,14 +61,9 @@ def fetch_data():
             if hours_of_operation and "Coming Soon" in hours_of_operation:
                 continue
 
-            
-            city=addr.city,
-            state=addr.state,
-            zipp=addr.postcode
-
-            # city = "<MISSING>"
-            # state = "<MISSING"
-            # zipp = "<MISSING>"
+            city = (addr.city,)
+            state = (addr.state,)
+            zipp = addr.postcode
 
             item = SgRecord(
                 locator_domain=domain,
