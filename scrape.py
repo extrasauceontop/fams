@@ -129,6 +129,15 @@ def get_data():
         hours = ""
         country_code = "CA"
 
+        try:
+            phone = "(" + location_name.split("(")[1]
+            location_name = location_name.replace(phone, "").strip()
+        except Exception:
+            pass
+        
+        if "," == address[-1]:
+            address = address[:-1]
+
         yield {
             "locator_domain": locator_domain,
             "page_url": page_url,
