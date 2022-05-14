@@ -5,26 +5,18 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
 from sgpostal.sgpostal import parse_address_intl
-from sgselenium.sgselenium import SgChrome
-# from webdriver_manager.chrome import ChromeDriverManager
+from sgselenium.sgselenium import SgFirefox
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def fetch_data():
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
     start_url = "https://burtonsgrill.com/locations/"
     domain = "burtonsgrill.com"
 
-    with SgChrome(
-        # executable_path=ChromeDriverManager().install(),
-        user_agent=user_agent,
-        is_headless=True,
-    ).driver() as driver:
-        driver.get(start_url)
+    with SgFirefox() as driver:
+        driver.get_and_wait_for_request(start_url)
 
         dom = etree.HTML(driver.page_source)
 
@@ -61,8 +53,8 @@ def fetch_data():
             if hours_of_operation and "Coming Soon" in hours_of_operation:
                 continue
 
-            city = (addr.city,)
-            state = (addr.state,)
+            city = addr.city
+            state = addr.state
             zipp = addr.postcode
 
             item = SgRecord(
