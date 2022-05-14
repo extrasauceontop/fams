@@ -122,7 +122,7 @@ def get_data():
                     + address_parts.split(", ")[-1].strip().split(" ")[-1]
                 )
                 state = "<MISSING>"
-
+        address = address.strip()
         store_number = grid["data-store-id"]
         phone = ""
         location_type = ""
