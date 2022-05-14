@@ -47,11 +47,16 @@ def get_driver(url, class_name, driver=None):
 def get_data():
     url = "https://www.centrehifi.com/en/store-locator/"
     class_name = "popup-language-header"
-    driver = get_driver(url, class_name)
-    response = driver.page_source
+    
+    with SgChrome() as driver:
+        driver.get(url)
+        WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CLASS_NAME, class_name))
+        )
+        response = driver.page_source
 
     soup = bs(response, "html.parser")
-    driver.quit()
+
 
     grids = soup.find_all("div", attrs={"class": "js-single-store-info"})
 
