@@ -15,7 +15,11 @@ def fetch_data():
     domain = "aldi.nl"
 
     data = session.get(start_url).json()
+    x = 0
     for poi in data["response"]["locations"]:
+        x = x+1
+        if x == 10:
+            return
         city = poi["city"]
         street_address = poi["streetAndNumber"]
         store_number = poi["id"]
