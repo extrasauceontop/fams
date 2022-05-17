@@ -1,71 +1,126 @@
-from lxml import etree
-from time import sleep
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium import webdriver  # noqa
+import undetected_chromedriver as uc
+import time
+from sgscrape import simple_scraper_pipeline as sp
+import ssl
+import json
 
-from sgrequests import SgRequests
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord_id import SgRecordID
-from sgscrape.sgwriter import SgWriter
-from sgselenium.sgselenium import SgFirefox
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def fetch_data():
-    session = SgRequests()
-    start_url = "https://uberall.com/api/storefinders/ALDINORDNL_8oqeY3lnn9MTZdVzFn4o0WCDVTauoZ/locations/all?v=20211005&language=nl&fieldMask=id&fieldMask=identifier&fieldMask=googlePlaceId&fieldMask=lat&fieldMask=lng&fieldMask=name&fieldMask=country&fieldMask=city&fieldMask=province&fieldMask=streetAndNumber&fieldMask=zip&fieldMask=businessId&fieldMask=addressExtra&"
-    domain = "aldi.nl"
+def get_driver(url, driver=None):
 
-    data = session.get(start_url).json()
-    x = 0
-    for poi in data["response"]["locations"]:
-        x = x+1
-        if x == 10:
-            return
-        city = poi["city"]
-        street_address = poi["streetAndNumber"]
-        store_number = poi["id"]
-        page_url = f"https://www.aldi.nl/supermarkt.html/l/{city.lower().replace(' ', '-')}/{street_address.lower().replace(' ', '-')}/{store_number}"
-        with SgFirefox() as driver:
-            driver.get(page_url)
-            sleep(10)
-            loc_dom = etree.HTML(driver.page_source)
-        hoo = loc_dom.xpath(
-            '//div[@class="ubsf_location-page-opening-hours-list"]//text()'
-        )
-        hoo = " ".join([e.strip() for e in hoo if e.strip() and e != "gesloten"])
-        phone = loc_dom.xpath('//li[@class="ubsf_details-phone"]/span/text()')
-        phone = phone[0] if phone else ""
+    options = webdriver.ChromeOptions()
+    options.add_argument("start-maximized")
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
 
-        item = SgRecord(
-            locator_domain=domain,
-            page_url=page_url,
-            location_name=poi["name"],
-            street_address=street_address,
-            city=city,
-            state=poi["province"],
-            zip_postal=poi["zip"],
-            country_code=poi["country"],
-            store_number=store_number,
-            phone=phone,
-            location_type="",
-            latitude=poi["lat"],
-            longitude=poi["lng"],
-            hours_of_operation=hoo,
-        )
+    driver.get(url)
+    return driver
 
-        yield item
+
+def get_data():
+    class_name = "eljUma"
+    url = "https://order.wingzone.com/"
+
+    driver = get_driver(url, class_name)
+    time.sleep(2)
+    driver.find_elements_by_class_name("styles__StyledPrimaryButton-sc-3mz1a9-0")[
+        1
+    ].click()
+    time.sleep(2)
+
+    data = driver.execute_async_script(
+        """
+        var done = arguments[0]
+        fetch("https://api.koala.io/v1/ordering/store-locations/?sort[state_id]=asc&sort[label]=asc&include[]=operating_hours&include[]=attributes&include[]=delivery_hours&paginate=false", {
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": null,
+            "method": "GET",
+            "mode": "cors",
+            "credentials": "omit"
+        })
+        .then(res => res.json())
+        .then(data => done(data))
+        """
+    )
+
+    with open("file.txt", "w", encoding="utf-8") as output:
+        json.dump(data, output, indent=4)
+
+    driver.quit()
+
+    for location in data["data"]:
+        locator_domain = "wingzone.com"
+        page_url = "https://order.wingzone.com/"
+        location_name = location["cached_data"]["label"]
+        latitude = location["cached_data"]["latitude"]
+        longitude = location["cached_data"]["longitude"]
+        city = location["cached_data"]["city"]
+        store_number = location["id"]
+        address = location["street_address"]
+        state = location["cached_data"]["state"]
+        zipp = location["cached_data"]["zip"]
+        phone = location["cached_data"]["phone_number"]
+        location_type = "<MISSING>"
+        country_code = "US"
+
+        hours = "<INACCESSIBLE>"
+
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
 
 def scrape():
-    with SgWriter(
-        SgRecordDeduper(
-            SgRecordID(
-                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
-            )
-        )
-    ) as writer:
-        for item in fetch_data():
-            writer.write_row(item)
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
+        location_name=sp.MappingField(
+            mapping=["location_name"], part_of_record_identity=True
+        ),
+        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
+        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
+    )
+
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
 
-if __name__ == "__main__":
-    scrape()
+scrape()
