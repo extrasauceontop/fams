@@ -1,8 +1,9 @@
 from sgselenium import SgChrome
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 with SgChrome() as driver:
     driver.get("https://www.zorbaz.com/")
     driver.save_screenshot("zorbas.png")
     response = driver.page_source
-    with open("index.html", "w", encoding="utf-8") as output:
-        print(response, file=output)
+    print(response)
