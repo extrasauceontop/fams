@@ -1,2 +1,3 @@
 --extra-index-url https://dl.cloudsmith.io/KVaWma76J5VNwrOm/crawl/crawl/python/simple/
 sgselenium==0.3.3
+sgscrape==0.2.9
