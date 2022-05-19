@@ -28,7 +28,7 @@ def extract_json(html_string):
 
 
 def get_data():
-    with SgChrome as driver:
+    with SgChrome() as driver:
         driver.get("https://www.zorbaz.com/locationz")
         response = driver.page_source
 
