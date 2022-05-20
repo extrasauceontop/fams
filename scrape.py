@@ -13,6 +13,7 @@ def fetch_data():
     start_url = "https://rocketfizz.com/?sl_engine=sl-xml"
 
     response = session.get(start_url)
+    print(response.text)
     dom = etree.XML(response.text)
     all_locations = dom.xpath("//marker")
     print(len(all_locations))
