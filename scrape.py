@@ -14,7 +14,7 @@ def fetch_data():
 
     response = session.get(start_url)
     print(response.text)
-    dom = etree.XML(response.text)
+    dom = etree.XML(response.content)
     all_locations = dom.xpath("//marker")
     print(len(all_locations))
     x = 0
