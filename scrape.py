@@ -1,5 +1,5 @@
 from lxml import etree
-
+from sgrequests import SgRequests
 from sgselenium import SgFirefox
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -14,7 +14,7 @@ def fetch_data():
         response = driver.page_source
 
     domain = "rocketfizz.com"
-    
+    session = SgRequests()
     print(response.text)
     dom = etree.XML(response.content)
     all_locations = dom.xpath("//marker")
