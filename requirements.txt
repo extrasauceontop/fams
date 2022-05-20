@@ -1,3 +1,3 @@
-sgselenium==0.0.15
+sgselenium==0.3.3
 pandas==1.1.5
 beautifulsoup4==4.9.3
