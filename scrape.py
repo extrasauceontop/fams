@@ -15,7 +15,7 @@ def fetch_data():
 
     domain = "rocketfizz.com"
     session = SgRequests()
-    print(response.text)
+    print(response)
     dom = etree.XML(response.content)
     all_locations = dom.xpath("//marker")
     print(len(all_locations))
