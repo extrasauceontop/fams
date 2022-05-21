@@ -19,7 +19,7 @@ def get_data():
         grids = soup.find_all("div", attrs={"class": "row-fluid row-t2crq"})
         for grid in grids:
             locator_domain = "sytner.co.uk"
-            page_url = grid.find("a", attrs={"title": "Full Details"})["href"]
+            page_url = "https:" + grid.find("a", attrs={"title": "Full Details"})["href"]
             location_name = grid.find("h3").text.strip()
             address = grid.find("span", attrs={"class": "address-line1"}).text.strip()[:-1]
             city = grid.find("span", attrs={"class": "address-city"}).text.strip()[:-1]
