@@ -37,7 +37,8 @@ def get_data():
             driver.get(page_url)
             hours_response = driver.page_source
 
-            print(hours_response)
+            # print(hours_response)
+            print(page_url)
             
             raise Exception
             hours = "<LATER>"
