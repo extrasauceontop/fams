@@ -37,11 +37,15 @@ def get_data():
             driver.get(page_url)
             hours_response = driver.page_source
 
-            print(hours_response)
-            # print(page_url)
+            hours_soup = bs(hours_response, "html.parser")
+            hours_parts = hours_soup.find("div", attrs={"class": "loc-hours-table"}).find_all("tr")
+
+            hours = ""
+            for part in hours_parts:
+                hours = hours + part.text.strip() + ", "
             
-            raise Exception
-            hours = "<LATER>"
+            hours = hours[:-2]
+            print(hours)
 
             yield {
                 "locator_domain": locator_domain,
