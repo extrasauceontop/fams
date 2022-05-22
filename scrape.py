@@ -10,28 +10,20 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def get_data():
     url = "https://www.galerieslafayette.com/m/nos-magasins"
-
-    with SgChrome(proxy_country="fr", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
-        driver.get(url)
-        response = driver.page_source
-    soup = bs(response, "html.parser")
-    divs = soup.find_all("div", attrs={"class": "gl-option"})
-
-    for location in divs:
+    
+    x = 0
+    while True:
+        with SgChrome(proxy_country="fr", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
+            driver.get(url)
+            try:
+                driver.find_elements_by_class_name("gl-option")[x].click()
+            except Exception:
+                break
+            
+            loc_response = driver.page_source
+            page_url = driver.current_url
+            location_name = "<LATER>"
         locator_domain = "https://www.galerieslafayette.com/"
-        location_name = location.text.strip()
-        page_url = unidecode.unidecode("https://www.galerieslafayette.com/m/magasin-" + location_name.lower().replace(" outlet ", " ").split("lafayette")[1].strip().replace(" ", "-")).replace("-paris", "")
-
-        try:
-            with SgChrome(proxy_country="fr", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, driver_wait_timeout=120) as driver:
-                driver.get(page_url)
-                loc_response = driver.page_source
-        except Exception:
-            print(location_name)
-            print(page_url)
-            print("")
-            continue
-        
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         store_number = "<MISSING>"
