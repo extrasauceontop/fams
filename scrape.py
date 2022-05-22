@@ -18,7 +18,7 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://www.galerieslafayette.com/"
     api_url = "https://www.galerieslafayette.com/m/nos-magasins"
 
-    with SgChrome() as driver:
+    with SgChrome(proxy_country="fr") as driver:
         driver.get(api_url)
         r = driver.page_source
         print(r)
