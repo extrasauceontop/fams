@@ -20,7 +20,8 @@ def get_data():
                 element = driver.find_element_by_class_name("gl-select__label")
                 driver.execute_script("arguments[0].click();", element)
                 print("here")
-                driver.find_elements_by_class_name("gl-option")[x].click()
+                element = driver.find_elements_by_class_name("gl-option")[x]
+                driver.execute_script("arguments[0].click();", element)
             except Exception as e:
                 print(e)
                 break
