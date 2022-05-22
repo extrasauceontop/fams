@@ -19,11 +19,17 @@ def get_data():
         grids = soup.find_all("div", attrs={"class": "row-fluid row-t2crq"})
         for grid in grids:
             locator_domain = "sytner.co.uk"
-            page_url = "https:" + grid.find("a", attrs={"title": "Full Details"})["href"]
+            page_url = (
+                "https:" + grid.find("a", attrs={"title": "Full Details"})["href"]
+            )
             location_name = grid.find("h3").text.strip()
-            address = grid.find("span", attrs={"class": "address-line1"}).text.strip()[:-1]
+            address = grid.find("span", attrs={"class": "address-line1"}).text.strip()[
+                :-1
+            ]
             city = grid.find("span", attrs={"class": "address-city"}).text.strip()[:-1]
-            state = grid.find("span", attrs={"class": "address-county"}).text.strip()[:-1]
+            state = grid.find("span", attrs={"class": "address-county"}).text.strip()[
+                :-1
+            ]
             zipp = grid.find("span", attrs={"class": "address-postcode"}).text.strip()
             country_code = "UK"
             phone = grid.find("div", attrs={"class": "location-no"}).find("a")["href"]
@@ -31,21 +37,27 @@ def get_data():
 
             location_type = grid.find("span").text.strip()
             latitude = grid.find("a", attrs={"title": "View Location"})["data-latitude"]
-            longitude = grid.find("a", attrs={"title": "View Location"})["data-longitude"]
+            longitude = grid.find("a", attrs={"title": "View Location"})[
+                "data-longitude"
+            ]
             store_number = grid.find("a", attrs={"title": "View Location"})["data-id"]
-            
+
             driver.get(page_url)
             hours_response = driver.page_source
 
             hours_soup = bs(hours_response, "html.parser")
-            hours_parts = hours_soup.find("div", attrs={"class": "loc-hours-table"}).find_all("tr")
+            hours_parts = hours_soup.find(
+                "div", attrs={"class": "loc-hours-table"}
+            ).find_all("tr")
 
             hours = ""
             for part in hours_parts:
                 hours = hours + part.text.strip() + ", "
-            
+
             hours = hours[:-2]
-            print(hours)
+            hours = hours.replace("\n", "").replace("\r", "").replace("\t", "")
+            while "  " in hours:
+                hours = hours.replace("  ", " ")
 
             yield {
                 "locator_domain": locator_domain,
