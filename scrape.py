@@ -13,6 +13,7 @@ def get_data():
     
     x = 0
     while True:
+        
         with SgChrome(proxy_country="fr", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
             driver.get(url)
             try:
@@ -23,6 +24,8 @@ def get_data():
             loc_response = driver.page_source
             page_url = driver.current_url
             location_name = "<LATER>"
+        print(page_url)
+        x = x+1
         locator_domain = "https://www.galerieslafayette.com/"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
