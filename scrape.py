@@ -1,73 +1,56 @@
-from sgselenium import SgChrome
-from bs4 import BeautifulSoup as bs
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium import webdriver  # noqa
+import undetected_chromedriver as uc
+import time
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
-from proxyfier import ProxyProviders
-import unidecode
-from sgpostal.sgpostal import International_Parser, parse_address
-import time
+from sgselenium import SgChrome
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+
+
 def get_data():
-    url = "https://www.galerieslafayette.com/m/nos-magasins"
-    
-    x = 0
-    while True:
-        
-        with SgChrome(proxy_country="fr", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
-            driver.get(url)
-            try:
-                element = driver.find_element_by_class_name("gl-select__label")
-                driver.execute_script("arguments[0].click();", element)
-                print("here")
-                element = driver.find_elements_by_class_name("gl-option")[x]
-                driver.execute_script("arguments[0].click();", element)
-                print("there")
-                time.sleep(60)
-            except Exception as e:
-                print(e)
-                break
-            
-            loc_response = driver.page_source
-            if "47000" in loc_response:
-                print("HOORAY")
-            else:
-                print("BOO")
-            page_url = driver.current_url
-            location_name = "<LATER>"
+    with SgChrome() as driver:
+        time.sleep(2)
+        driver.find_elements_by_class_name("styles__StyledPrimaryButton-sc-3mz1a9-0")[
+            1
+        ].click()
+        time.sleep(2)
 
-            test = driver.execute_script(
-                "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
-            )
-        
-        x = x+1
-        locator_domain = "https://www.galerieslafayette.com/"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
-        store_number = "<MISSING>"
+        data = driver.execute_async_script(
+            """
+            var done = arguments[0]
+            fetch("https://api.koala.io/v1/ordering/store-locations/?sort[state_id]=asc&sort[label]=asc&include[]=operating_hours&include[]=attributes&include[]=delivery_hours&paginate=false", {
+                "referrerPolicy": "strict-origin-when-cross-origin",
+                "body": null,
+                "method": "GET",
+                "mode": "cors",
+                "credentials": "omit"
+            })
+            .then(res => res.json())
+            .then(data => done(data))
+            """
+        )
+
+    driver.quit()
+
+    for location in data["data"]:
+        locator_domain = "wingzone.com"
+        page_url = "https://order.wingzone.com/"
+        location_name = location["cached_data"]["label"]
+        latitude = location["cached_data"]["latitude"]
+        longitude = location["cached_data"]["longitude"]
+        city = location["cached_data"]["city"]
+        store_number = location["id"]
+        address = location["street_address"]
+        state = location["cached_data"]["state"]
+        zipp = location["cached_data"]["zip"]
+        phone = location["cached_data"]["phone_number"]
         location_type = "<MISSING>"
-        hours = "<MISSING>"
-        country_code = "FR"
+        country_code = "US"
 
-        loc_soup = bs(loc_response, "html.parser")
-        ad = loc_soup.find("p", attrs={"class": "store-details__address"}).text.strip().replace("\r", " ").replace("\n", " ").strip()
-        a = parse_address(International_Parser(), ad)
-        address = f"{a.street_address_1} {a.street_address_2}".replace(
-            "None", ""
-        ).strip()
-        state = a.state or "<MISSING>"
-        zipp = a.postcode or "<MISSING>"
-        city = a.city or "<MISSING>"
-
-        phone = "<LATER>"
-
-        if location_name == "Magasin Galeries Lafayette Bordeaux":
-            address = "11-19 rue Sainte Catherine"
-            zipp = "33 000"
-            city = "Bordeaux"
-        if location_name == "Magasin Galeries Lafayette Luxembourg":
-            city = "LUXEMBOURG"
+        hours = "<LATER>"
 
         yield {
             "locator_domain": locator_domain,
@@ -122,4 +105,4 @@ def scrape():
     pipeline.run()
 
 
-scrape()      
+scrape()
