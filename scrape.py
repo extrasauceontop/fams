@@ -22,6 +22,7 @@ def get_data():
                 print("here")
                 element = driver.find_elements_by_class_name("gl-option")[x]
                 driver.execute_script("arguments[0].click();", element)
+                print("there")
             except Exception as e:
                 print(e)
                 break
