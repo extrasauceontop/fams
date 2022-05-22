@@ -33,6 +33,7 @@ def get_data():
             page_url = driver.current_url
             location_name = "<LATER>"
         print(page_url)
+        print(loc_response)
         x = x+1
         locator_domain = "https://www.galerieslafayette.com/"
         latitude = "<MISSING>"
