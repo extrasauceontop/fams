@@ -8,7 +8,6 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
 from sglogging import sglog
 
-session = SgRequests()
 log = sglog.SgLogSetup().get_logger(logger_name="galerieslafayette.com")
 
 
