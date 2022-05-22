@@ -5,6 +5,7 @@ import ssl
 from proxyfier import ProxyProviders
 import unidecode
 from sgpostal.sgpostal import International_Parser, parse_address
+import time
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -23,6 +24,7 @@ def get_data():
                 element = driver.find_elements_by_class_name("gl-option")[x]
                 driver.execute_script("arguments[0].click();", element)
                 print("there")
+                time.sleep(60)
             except Exception as e:
                 print(e)
                 break
