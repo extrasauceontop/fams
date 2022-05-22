@@ -17,6 +17,7 @@ def get_data():
         with SgChrome(proxy_country="fr", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
             driver.get(url)
             try:
+                driver.find_element_by_class_name("gl-select__dropdown").click()
                 driver.find_elements_by_class_name("gl-option")[x].click()
             except Exception as e:
                 print(e)
