@@ -18,7 +18,8 @@ def get_data():
             driver.get(url)
             try:
                 driver.find_elements_by_class_name("gl-option")[x].click()
-            except Exception:
+            except Exception as e:
+                print(e)
                 break
             
             loc_response = driver.page_source
