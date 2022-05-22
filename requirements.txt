@@ -4,3 +4,4 @@ sgpostal==0.1.0
 lxml==4.6.2
 sgselenium==0.3.3
 sglogging==0.0.4
+proxyfier==1.1.6
