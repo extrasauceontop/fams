@@ -8,6 +8,7 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgpostal.sgpostal import International_Parser, parse_address
 from sglogging import sglog
 import ssl
+from proxyfier import ProxyProviders
 
 ssl._create_default_https_context = ssl._create_unverified_context
 log = sglog.SgLogSetup().get_logger(logger_name="galerieslafayette.com")
@@ -18,7 +19,7 @@ def fetch_data(sgw: SgWriter):
     locator_domain = "https://www.galerieslafayette.com/"
     api_url = "https://www.galerieslafayette.com/m/nos-magasins"
 
-    with SgChrome(proxy_country="fr") as driver:
+    with SgChrome(proxy_country="fr", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
         driver.get(api_url)
         r = driver.page_source
         print(r)
