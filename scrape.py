@@ -9,6 +9,8 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def get_data():
     with SgChrome() as driver:
+        url = "https://order.wingzone.com/"
+        driver.get(url)
         time.sleep(2)
         driver.find_elements_by_class_name("styles__StyledPrimaryButton-sc-3mz1a9-0")[
             1
