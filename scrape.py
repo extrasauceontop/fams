@@ -20,8 +20,10 @@ def get_data():
         for location in divs:
             locator_domain = "https://www.galerieslafayette.com/"
             location_name = location.text.strip()
-            page_url = "https://www.galerieslafayette.com/m/magasin-" + location_name.lower().replace(" outlet ", " ").split("lafayette")[1].strip.replace(" ", "-")
+            print(location_name)
+            page_url = "https://www.galerieslafayette.com/m/magasin-" + location_name.lower().replace(" outlet ", " ").split("lafayette")[1].strip().replace(" ", "-")
             print(page_url)
+            print("")
 
             latitude = "<LATER>"
             longitude = "<LATER>"
