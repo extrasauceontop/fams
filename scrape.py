@@ -32,8 +32,15 @@ def get_data():
             loc_response = driver.page_source
             page_url = driver.current_url
             location_name = "<LATER>"
-        print(page_url)
-        print(loc_response)
+
+            test = driver.execute_script(
+                "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
+            )
+        
+        for element in test:
+            print(element)
+        with open("data.csv", "w", encoding="utf-8") as output:
+            print(loc_response, file=output)
         x = x+1
         locator_domain = "https://www.galerieslafayette.com/"
         latitude = "<MISSING>"
