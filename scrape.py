@@ -42,6 +42,7 @@ def get_data():
             ]
             store_number = grid.find("a", attrs={"title": "View Location"})["data-id"]
 
+            print(page_url)
             driver.get(page_url)
             hours_response = driver.page_source
 
