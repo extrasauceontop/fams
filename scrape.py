@@ -30,6 +30,10 @@ def get_data():
                 break
             
             loc_response = driver.page_source
+            if "47000" in loc_response:
+                print("HOORAY")
+            else:
+                print("BOO")
             page_url = driver.current_url
             location_name = "<LATER>"
 
@@ -37,10 +41,6 @@ def get_data():
                 "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
             )
         
-        for element in test:
-            print(element)
-        with open("data.csv", "w", encoding="utf-8") as output:
-            print(loc_response, file=output)
         x = x+1
         locator_domain = "https://www.galerieslafayette.com/"
         latitude = "<MISSING>"
