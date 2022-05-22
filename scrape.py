@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
 from proxyfier import ProxyProviders
+import unidecode
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -21,7 +22,7 @@ def get_data():
             locator_domain = "https://www.galerieslafayette.com/"
             location_name = location.text.strip()
             print(location_name)
-            page_url = "https://www.galerieslafayette.com/m/magasin-" + location_name.lower().replace(" outlet ", " ").split("lafayette")[1].strip().replace(" ", "-")
+            page_url = unidecode.unidecode("https://www.galerieslafayette.com/m/magasin-" + location_name.lower().replace(" outlet ", " ").split("lafayette")[1].strip().replace(" ", "-"))
             print(page_url)
             print("")
 
