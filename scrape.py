@@ -1,6 +1,3 @@
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium import webdriver  # noqa
-import undetected_chromedriver as uc
 import time
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
@@ -32,8 +29,6 @@ def get_data():
             .then(data => done(data))
             """
         )
-
-    driver.quit()
 
     for location in data["data"]:
         locator_domain = "wingzone.com"
