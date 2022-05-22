@@ -14,65 +14,66 @@ def get_data():
     with SgChrome(proxy_country="fr", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
         driver.get(url)
         response = driver.page_source
-        soup = bs(response, "html.parser")
-        divs = soup.find_all("div", attrs={"class": "gl-option"})
+    soup = bs(response, "html.parser")
+    divs = soup.find_all("div", attrs={"class": "gl-option"})
 
-        for location in divs:
-            locator_domain = "https://www.galerieslafayette.com/"
-            location_name = location.text.strip()
-            page_url = unidecode.unidecode("https://www.galerieslafayette.com/m/magasin-" + location_name.lower().replace(" outlet ", " ").split("lafayette")[1].strip().replace(" ", "-")).replace("-paris", "")
+    for location in divs:
+        locator_domain = "https://www.galerieslafayette.com/"
+        location_name = location.text.strip()
+        page_url = unidecode.unidecode("https://www.galerieslafayette.com/m/magasin-" + location_name.lower().replace(" outlet ", " ").split("lafayette")[1].strip().replace(" ", "-")).replace("-paris", "")
 
-            try:
+        try:
+            with SgChrome(proxy_country="fr", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, driver_wait_timeout=120) as driver:
                 driver.get(page_url)
                 loc_response = driver.page_source
-            except Exception:
-                print(location_name)
-                print(page_url)
-                print("")
-                continue
-            
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            store_number = "<MISSING>"
-            location_type = "<MISSING>"
-            hours = "<MISSING>"
-            country_code = "FR"
+        except Exception:
+            print(location_name)
+            print(page_url)
+            print("")
+            continue
+        
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        store_number = "<MISSING>"
+        location_type = "<MISSING>"
+        hours = "<MISSING>"
+        country_code = "FR"
 
-            loc_soup = bs(loc_response, "html.parser")
-            ad = loc_soup.find("p", attrs={"class": "store-details__address"}).text.strip().replace("\r", " ").replace("\n", " ").strip()
-            a = parse_address(International_Parser(), ad)
-            address = f"{a.street_address_1} {a.street_address_2}".replace(
-                "None", ""
-            ).strip()
-            state = a.state or "<MISSING>"
-            zipp = a.postcode or "<MISSING>"
-            city = a.city or "<MISSING>"
+        loc_soup = bs(loc_response, "html.parser")
+        ad = loc_soup.find("p", attrs={"class": "store-details__address"}).text.strip().replace("\r", " ").replace("\n", " ").strip()
+        a = parse_address(International_Parser(), ad)
+        address = f"{a.street_address_1} {a.street_address_2}".replace(
+            "None", ""
+        ).strip()
+        state = a.state or "<MISSING>"
+        zipp = a.postcode or "<MISSING>"
+        city = a.city or "<MISSING>"
 
-            phone = "<LATER>"
+        phone = "<LATER>"
 
-            if location_name == "Magasin Galeries Lafayette Bordeaux":
-                address = "11-19 rue Sainte Catherine"
-                zipp = "33 000"
-                city = "Bordeaux"
-            if location_name == "Magasin Galeries Lafayette Luxembourg":
-                city = "LUXEMBOURG"
+        if location_name == "Magasin Galeries Lafayette Bordeaux":
+            address = "11-19 rue Sainte Catherine"
+            zipp = "33 000"
+            city = "Bordeaux"
+        if location_name == "Magasin Galeries Lafayette Luxembourg":
+            city = "LUXEMBOURG"
 
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "store_number": store_number,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
 
 def scrape():

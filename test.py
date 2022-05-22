@@ -37,8 +37,8 @@ def get_driver(url, class_name, driver=None):
     return driver
 
 
-url = "https://www.galerieslafayette.com/m/nos-magasins"
-class_name = "gl-select__text"
+url = "https://www.galerieslafayette.com/m/magasin-angers"
+class_name = "store-details__address"
 
 driver = get_driver(url, class_name)
 response = driver.page_source
