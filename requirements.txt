@@ -5,3 +5,4 @@ lxml==4.6.2
 sgselenium==0.3.3
 sglogging==0.0.4
 proxyfier==1.1.6
+unidecode==1.3.1
