@@ -1,11 +1,10 @@
-from urllib import response
-from sgscrape.sgrecord import SgRecord
 from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
 from proxyfier import ProxyProviders
 import unidecode
+from sgpostal.sgpostal import International_Parser, parse_address
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -21,22 +20,42 @@ def get_data():
         for location in divs:
             locator_domain = "https://www.galerieslafayette.com/"
             location_name = location.text.strip()
-            print(location_name)
-            page_url = unidecode.unidecode("https://www.galerieslafayette.com/m/magasin-" + location_name.lower().replace(" outlet ", " ").split("lafayette")[1].strip().replace(" ", "-"))
-            print(page_url)
-            print("")
+            page_url = unidecode.unidecode("https://www.galerieslafayette.com/m/magasin-" + location_name.lower().replace(" outlet ", " ").split("lafayette")[1].strip().replace(" ", "-")).replace("-paris", "")
 
-            latitude = "<LATER>"
-            longitude = "<LATER>"
-            city = "<LATER>"
-            store_number = "<LATER>"
-            address = "<LATER>"
-            state = "<LATER>"
-            zipp = "<LATER>"
+            try:
+                driver.get(page_url)
+                loc_response = driver.page_source
+            except Exception:
+                print(location_name)
+                print(page_url)
+                print("")
+                continue
+            
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            store_number = "<MISSING>"
+            location_type = "<MISSING>"
+            hours = "<MISSING>"
+            country_code = "FR"
+
+            loc_soup = bs(loc_response, "html.parser")
+            ad = loc_soup.find("p", attrs={"class": "store-details__address"}).text.strip().replace("\r", " ").replace("\n", " ").strip()
+            a = parse_address(International_Parser(), ad)
+            address = f"{a.street_address_1} {a.street_address_2}".replace(
+                "None", ""
+            ).strip()
+            state = a.state or "<MISSING>"
+            zipp = a.postcode or "<MISSING>"
+            city = a.city or "<MISSING>"
+
             phone = "<LATER>"
-            location_type = "<LATER>"
-            hours = "<LATER>"
-            country_code = "<LATER>"
+
+            if location_name == "Magasin Galeries Lafayette Bordeaux":
+                address = "11-19 rue Sainte Catherine"
+                zipp = "33 000"
+                city = "Bordeaux"
+            if location_name == "Magasin Galeries Lafayette Luxembourg":
+                city = "LUXEMBOURG"
 
             yield {
                 "locator_domain": locator_domain,
