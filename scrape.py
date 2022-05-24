@@ -2,7 +2,7 @@ from sgselenium import SgChrome
 import time
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
-from webdriver_manager.chrome import ChromeDriverManager
+# from webdriver_manager.chrome import ChromeDriverManager
 import pathlib
 
 scriptDirectory = pathlib.Path().absolute()
@@ -25,7 +25,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 def get_data():
     url = "https://order.wingzone.com/"
 
-    with SgChrome(executable_path=ChromeDriverManager().install(), is_headless=True) as driver:
+    with SgChrome(is_headless=True) as driver:
         driver.get(url)
         time.sleep(5)
         driver.find_elements_by_class_name("styles__StyledPrimaryButton-sc-3mz1a9-0")[
