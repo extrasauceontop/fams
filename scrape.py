@@ -1,26 +1,43 @@
+from sgselenium import SgChrome
 import time
 from sgscrape import simple_scraper_pipeline as sp
 import ssl
-from sgselenium import SgChrome
+from webdriver_manager.chrome import ChromeDriverManager
+import pathlib
 
+scriptDirectory = pathlib.Path().absolute()
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
+# def get_driver(url, driver=None):
+
+#     options = webdriver.ChromeOptions()
+#     options.add_argument("start-maximized")
+#     options.add_argument("--headless")
+#     options.add_argument("--no-sandbox")
+#     options.add_argument("--disable-dev-shm-usage")
+#     driver = uc.Chrome(executable_path=ChromeDriverManager().install(), options=options)
+
+#     driver.get(url)
+#     return driver
+
 
 def get_data():
-    with SgChrome() as driver:
-        url = "https://order.wingzone.com/"
+    url = "https://order.wingzone.com/"
+
+    with SgChrome(executable_path=ChromeDriverManager().install(), is_headless=True) as driver:
         driver.get(url)
-        time.sleep(2)
+        time.sleep(5)
         driver.find_elements_by_class_name("styles__StyledPrimaryButton-sc-3mz1a9-0")[
             1
         ].click()
-        time.sleep(2)
-
+        time.sleep(5)
+        with open("file.txt", "w", encoding="utf-8") as output:
+            print(driver.page_source, file=output)
         data = driver.execute_async_script(
             """
             var done = arguments[0]
-            fetch("https://api.koala.io/v1/ordering/store-locations/?sort[state_id]=asc&sort[label]=asc&include[]=operating_hours&include[]=attributes&include[]=delivery_hours&paginate=false", {
+            fetch("https://api.koala.io/v1/ordering/store-locations?sort[state_id]=asc&sort[label]=asc&include[]=operating_hours&include[]=attributes&include[]=delivery_hours&paginate=false", {
                 "referrerPolicy": "strict-origin-when-cross-origin",
                 "body": null,
                 "method": "GET",
@@ -102,4 +119,5 @@ def scrape():
     pipeline.run()
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
