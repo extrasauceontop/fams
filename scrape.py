@@ -1,85 +1,89 @@
-import json
-from sgscrape.sgwriter import SgWriter
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-import ssl
-from sgselenium import SgFirefox
-import time
+# -*- coding: utf-8 -*-
+from datetime import datetime
+from urllib.parse import urljoin
+from time import sleep
+from lxml import etree
 
-ssl._create_default_https_context = ssl._create_unverified_context
+from sgrequests import SgRequests
+from sgscrape.sgrecord import SgRecord
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
+from sgselenium.sgselenium import SgFirefox
 
 
 def fetch_data():
-    with SgFirefox(is_headless=True) as driver:
-        url = "https://example.com/"
-        driver.get(url)
-        time.sleep(10)
-        statelist = [
-            "ab",
-            "BC",
-            "MB",
-            "NB",
-            "NL",
-            "NT",
-            "NS",
-            "NU",
-            "ON",
-            "PE",
-            "QC",
-            "SK",
-            "YT",
-        ]
-        for st in statelist:
-            url = (
-                "https://www.atriaretirement.ca/wp-content/themes/aslblanktheme/script-getstatelocations.php?state="
-                + st
+    session = SgRequests()
+
+    start_url = "https://api.sallinggroup.com/v2/stores/?brand=br&per_page=200"
+    domain = "br.dk"
+    hdr = {
+        "accept": "application/json, text/plain, */*",
+        "authorization": "Bearer 4a368f3b-2d01-4338-bc9f-2b5c7d81d195",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.80 Safari/537.36",
+    }
+    all_locations = session.get(start_url, headers=hdr).json()
+    print(all_locations)
+    home_url = "https://www.br.dk/kundeservice/find-din-br/"
+    with SgFirefox() as driver:
+        driver.get(home_url)
+        sleep(10)
+        dom = etree.HTML(driver.page_source)
+        all_urls = dom.xpath('//div[@class="cta"]/a/@href')
+        for url in all_urls:
+            page_url = urljoin(home_url, url)
+            driver.get(page_url)
+            sleep(15)
+            loc_dom = etree.HTML(driver.page_source)
+            location_name = loc_dom.xpath("//h1/text()")[0]
+            for e in all_locations:
+                if e["name"] in location_name:
+                    poi = e
+                    break
+            hoo = []
+            for e in poi["hours"]:
+                if e["closed"]:
+                    closes_time = datetime.fromisoformat(str(e["date"]))
+                    closes = closes_time.strftime("%A %d %b, %Y")
+                    hoo.append(f"{closes} closed")
+                else:
+                    opens_time = datetime.fromisoformat(str(e["open"]))
+                    opens = opens_time.strftime("%A %H:%M")
+                    closes_time = datetime.fromisoformat(str(e["close"]))
+                    closes = closes_time.strftime("%H:%M")
+                    hoo.append(f"{opens} - {closes}")
+            hoo = " ".join(hoo)
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=page_url,
+                location_name=poi["name"],
+                street_address=poi["address"]["street"],
+                city=poi["address"]["city"],
+                state="",
+                zip_postal=poi["address"]["zip"],
+                country_code=poi["address"]["country"],
+                store_number=poi["sapSiteId"],
+                phone=poi["phoneNumber"],
+                location_type="",
+                latitude=poi["coordinates"][0],
+                longitude=poi["coordinates"][1],
+                hours_of_operation=hoo,
             )
 
-            driver.get(url)
-            loclist = driver.page_source.split('"communities":', 1)[1].split("]}<", 1)[0]
-            loclist = loclist + "]"
-            loclist = json.loads(loclist)
-            for loc in loclist:
-
-                store = loc["community_number"]
-                title = loc["name"]
-                street = loc["address_1"] + loc["address_2"]
-                city = loc["city"]
-                state = loc["province"]
-                pcode = loc["postal_code"]
-                phone = loc["phone"]
-                lat = loc["latitude"]
-                longt = loc["longitude"]
-                link = loc["url"]
-
-                yield SgRecord(
-                    locator_domain="https://www.atriaretirement.ca/",
-                    page_url=link,
-                    location_name=title,
-                    street_address=street.strip(),
-                    city=city.strip(),
-                    state=state.strip(),
-                    zip_postal=pcode.strip(),
-                    country_code="CA",
-                    store_number=str(store),
-                    phone=phone.strip(),
-                    location_type=SgRecord.MISSING,
-                    latitude=str(lat),
-                    longitude=str(longt),
-                    hours_of_operation=SgRecord.MISSING,
-                )
+            yield item
 
 
 def scrape():
-
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
