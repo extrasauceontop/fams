@@ -61,6 +61,8 @@ def get_data():
         location_type = "<MISSING>"
         hours = "24/7"
         country_code = "US"
+
+        print(page_url)
         try:
             phone_response = session.get(page_url, headers=browser_headers).text
             phone_soup = bs(phone_response, "html.parser")
@@ -68,14 +70,24 @@ def get_data():
             phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
 
         except Exception:
-            with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
-                browser_headers = SgSelenium.get_default_headers_for(
-                    the_driver=driver, request_url=page_url
-                )
-            phone_response = session.get(page_url, headers=browser_headers).text
-            phone_soup = bs(phone_response, "html.parser")
+            try:
+                with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
+                    browser_headers = SgSelenium.get_default_headers_for(
+                        the_driver=driver, request_url=page_url
+                    )
+                phone_response = session.get(page_url, headers=browser_headers).text
+                phone_soup = bs(phone_response, "html.parser")
 
-            phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
+                phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
+            
+            except Exception:
+                with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
+                    driver.get(page_url)
+                    phone_response = driver.page_source
+                    phone_soup = bs(phone_response, "html.parser")
+
+                    phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
+
 
         yield {
             "locator_domain": locator_domain,
