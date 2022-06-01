@@ -41,52 +41,32 @@ def get_data():
 
     url = "https://www.extendedstayamerica.com/hotels/"
     with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
-        browser_headers = SgSelenium.get_default_headers_for(
-            the_driver=driver, request_url=url
-        )
-    response = session.get(url, headers=browser_headers).text
-    json_objects = extract_json(response.split("window.esa.hotelsData = ")[1])
+        driver.get(url)
+        response = driver.page_source
+        json_objects = extract_json(response.split("window.esa.hotelsData = ")[1])
 
-    for location in json_objects:
-        locator_domain = "extendedstayamerica.com"
-        page_url = "https://www.extendedstayamerica.com" + location["urlMap"]
-        location_name = location["title"]
-        latitude = location["latitude"]
-        longitude = location["longitude"]
-        city = location["address"]["city"]
-        store_number = location["siteId"]
-        address = location["address"]["street"]
-        state = location["address"]["region"]
-        zipp = location["address"]["postalCode"]
-        location_type = "<MISSING>"
-        hours = "24/7"
-        country_code = "US"
+        for location in json_objects:
+            locator_domain = "extendedstayamerica.com"
+            page_url = "https://www.extendedstayamerica.com" + location["urlMap"]
+            location_name = location["title"]
+            latitude = location["latitude"]
+            longitude = location["longitude"]
+            city = location["address"]["city"]
+            store_number = location["siteId"]
+            address = location["address"]["street"]
+            state = location["address"]["region"]
+            zipp = location["address"]["postalCode"]
+            location_type = "<MISSING>"
+            hours = "24/7"
+            country_code = "US"
 
-        print(page_url)
-        try:
-            phone_response = session.get(page_url, headers=browser_headers).text
+            print(page_url)
+
+            driver.get(page_url)
+            phone_response = driver.page_source
             phone_soup = bs(phone_response, "html.parser")
 
             phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
-
-        except Exception:
-            try:
-                with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
-                    browser_headers = SgSelenium.get_default_headers_for(
-                        the_driver=driver, request_url=page_url
-                    )
-                phone_response = session.get(page_url, headers=browser_headers).text
-                phone_soup = bs(phone_response, "html.parser")
-
-                phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
-            
-            except Exception:
-                with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
-                    driver.get(page_url)
-                    phone_response = driver.page_source
-                    phone_soup = bs(phone_response, "html.parser")
-
-                    phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
 
 
         yield {
