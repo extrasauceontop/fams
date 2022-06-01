@@ -6,6 +6,9 @@ from sgscrape import simple_scraper_pipeline as sp
 from bs4 import BeautifulSoup as bs
 import os
 from proxyfier import ProxyProviders
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def extract_json(html_string):
