@@ -1,6 +1,8 @@
 from sgselenium import SgChrome
 from proxyfier import ProxyProviders
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 
 if __name__ == "__main__":
     user_agent = (
