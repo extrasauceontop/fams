@@ -30,12 +30,23 @@ def get_data():
                 + grid["id"].split("-")[-1]
             )
 
-            driver.get(page_url)
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located(
-                    (By.CLASS_NAME, "store-details-store-hours__content")
-                )
-            )
+            print(page_url)
+
+            x = 0
+            while True:
+                x = x+1
+                if x == 10:
+                    raise Exception
+                try:
+                    driver.get(page_url)
+                    WebDriverWait(driver, 20).until(
+                        EC.presence_of_element_located(
+                            (By.CLASS_NAME, "store-details-store-hours__content")
+                        )
+                    )
+                    break
+                except Exception:
+                    continue
 
             location_soup = bs(driver.page_source, "html.parser")
 
