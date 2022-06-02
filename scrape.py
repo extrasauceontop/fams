@@ -60,13 +60,7 @@ def get_data():
             hours = "24/7"
             country_code = "US"
 
-            print(page_url)
-
-            driver.get(page_url)
-            phone_response = driver.page_source
-            phone_soup = bs(phone_response, "html.parser")
-
-            phone = phone_soup.find("span", attrs={"class": "text-white"}).text.strip()
+            phone = "<INACCESSIBLE>"
 
 
         yield {
