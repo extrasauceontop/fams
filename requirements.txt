@@ -2,3 +2,4 @@
 sgrequests==0.3.8
 sgscrape==0.2.9
 lxml==4.6.2
+proxyfier==1.1.6

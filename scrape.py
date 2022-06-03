@@ -7,10 +7,11 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgwriter import SgWriter
+from proxyfier import ProxyProviders
 
 
 def fetch_data():
-    session = SgRequests()
+    session = SgRequests(proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER)
     domain = "dillards.com"
     start_url = "https://www.dillards.com/stores"
 
