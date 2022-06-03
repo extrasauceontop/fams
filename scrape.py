@@ -19,7 +19,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
     }
     response = session.post(start_url, headers=headers)
-    print(response)
+    print(response.response.text)
     dom = etree.HTML(response.text)
 
     all_poi_urls = dom.xpath('//div[@id="storeListing"]//a[@class="underline"]/@href')
