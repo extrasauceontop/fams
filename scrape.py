@@ -394,6 +394,8 @@ def get_data():
             for item in test:
                 if "base64" in item["name"] and "marker-list" in item["name"]:
                     x = x + 1
+                    log.info("new map")
+                    log.info(driver.current_url)
                     locations = new_map_page(driver)
                     found = 1
                     if len(locations) == 0:
@@ -406,6 +408,8 @@ def get_data():
                     break
 
             if found == 0:
+                log.info("old map")
+                log.info(driver.current_url)
                 locations = old_map_page(driver)
                 if len(locations) == 0:
                     log.info("")
