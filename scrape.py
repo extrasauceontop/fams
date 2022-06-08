@@ -15,7 +15,7 @@ if __name__ == "__main__":
             raise Exception
         try:
 
-            with SgChrome(block_third_parties=True, is_headless=True, proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, proxy_country="gr") as driver:
+            with SgChrome(block_third_parties=False, is_headless=True, proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, proxy_country="gr") as driver:
                 url = "https://mcdonalds.gr/%ce%b5%cf%83%cf%84%ce%b9%ce%b1%cf%84%cf%8c%cf%81%ce%b9%ce%b1/"
                 driver.get(url)
                 print(driver.page_source)
