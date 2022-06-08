@@ -11,5 +11,5 @@ if __name__ == "__main__":
         driver.get(url)
         time.sleep(10)
         response = driver.page_source
-        with open("file.txt", "w", encoding="utf-8") as output:
-            print(response, file=output)
+
+        print(response)
