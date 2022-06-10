@@ -211,7 +211,7 @@ def get_data():
     page_url = "https://headquartersoffice.com/cisco/"
     driver = get_driver(page_url, "inside-page-hero")
 
-    driver.get(page_url)
+    # driver.get(page_url)
     time.sleep(1)
     test = driver.execute_script(
         "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
