@@ -68,41 +68,6 @@ def get_page_urls():
     return final_links
 
 
-def get_driver(url, class_name, driver=None):
-    if driver is not None:
-        driver.quit()
-
-    user_agent = (
-        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
-    )
-    x = 0
-    while True:
-        x = x + 1
-        try:
-            driver = SgChrome(
-                executable_path=ChromeDriverManager().install(),
-                user_agent=user_agent,
-                is_headless=True,
-            ).driver()
-
-            driver.get(url)
-
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, class_name))
-            )
-            break
-        except Exception:
-            driver.quit()
-            if x == 10:
-                raise Exception(
-                    "Make sure this ran with a Proxy, will fail without one"
-                )
-            continue
-
-    driver.maximize_window()
-    return driver
-
-
 def new_map_page(driver):
     locations = []
     while True:
@@ -174,11 +139,6 @@ def new_map_page(driver):
                 country_code = addr.country
                 if country_code is None:
                     country_code = "<MISSING>"
-                # city = "<LATER>"
-                # address = "<LATER>"
-                # state = "<LATER>"
-                # zipp = "<LATER>"
-                # country_code = "<LATER>"
 
             phone = "<MISSING>"
 
@@ -237,7 +197,7 @@ def old_map_page(driver):
     except Exception:
         log.info(driver.current_url)
         raise Exception
-    
+
     for location in response["markers"]:
         locator_domain = "https://headquartersoffice.com/"
         page_url = driver.current_url
@@ -291,12 +251,6 @@ def old_map_page(driver):
             country_code = addr.country
             if country_code is None:
                 country_code = "<MISSING>"
-            
-            # city = "<LATER>"
-            # address = "<LATER>"
-            # state = "<LATER>"
-            # zipp = "<LATER>"
-            # country_code = "<LATER>"
 
         else:
             city = "<MISSING>"
@@ -310,7 +264,7 @@ def old_map_page(driver):
         if address == "<MISSING>":
             full_address = location["title"].split(" - ")[-1]
             addr = parse_address_intl(full_address)
-            if addr.street_address_1 != None:
+            if addr.street_address_1 is not None:
                 address_1 = addr.street_address_1
                 address_2 = addr.street_address_2
 
@@ -346,97 +300,109 @@ def get_data():
     page_urls = get_page_urls()
     x = 0
     y = 0
-    for page_url in page_urls:
-        if page_url == page_urls[0]:
-            driver = get_driver(page_url, "inside-page-hero")
+    user_agent = (
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    )
+    class_name = "inside-page-hero"
+    with SgChrome(executable_path=ChromeDriverManager().install(), user_agent=user_agent, is_headless=True, block_third_parties=False) as driver:
+        driver.maximize_window()
+        for page_url in page_urls:
+            count = 0
+            while True:
+                count = count + 1
+                if count == 10:
+                    raise Exception
+                try:
+                    driver.get(page_url)
 
-        else:
-            try:
-                driver.get(page_url)
+                    WebDriverWait(driver, 20).until(
+                        EC.presence_of_element_located((By.CLASS_NAME, class_name))
+                    )
+                    break
 
-            except Exception:
-                driver = get_driver(page_url, "inside-page-hero", driver=driver)
+                except Exception:
+                    continue
 
-        response = driver.page_source
-        soup = bs(response, "html.parser")
+            response = driver.page_source
+            soup = bs(response, "html.parser")
 
-        map_object = soup.find("div", attrs={"class": "wpgmza_map"})
-        if map_object is None:
-            if (
-                page_url == "https://headquartersoffice.com/privacy/"
-                or page_url == "https://headquartersoffice.com/"
-                or "?" in soup.find("h1").text.strip()
-            ):
-                continue
+            map_object = soup.find("div", attrs={"class": "wpgmza_map"})
+            if map_object is None:
+                if (
+                    page_url == "https://headquartersoffice.com/privacy/"
+                    or page_url == "https://headquartersoffice.com/"
+                    or "?" in soup.find("h1").text.strip()
+                ):
+                    continue
 
-            locator_domain = "headquartersoffice.com"
-            location_name = soup.find("h1").text.strip()
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            city = "<INACCESSIBLE"
-            store_number = "<MISSING>"
-            address = "<INACCESSIBLE>"
-            state = "<INACCESSIBLE>"
-            zipp = "<INACCESSIBLE>"
-            phone = "<INACCESSIBLE>"
-            location_type = "<INACCESSIBLE>"
-            hours = "<MISSING>"
-            country_code = "<MISSING>"
+                locator_domain = "headquartersoffice.com"
+                location_name = soup.find("h1").text.strip()
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                city = "<INACCESSIBLE"
+                store_number = "<MISSING>"
+                address = "<INACCESSIBLE>"
+                state = "<INACCESSIBLE>"
+                zipp = "<INACCESSIBLE>"
+                phone = "<INACCESSIBLE>"
+                location_type = "<INACCESSIBLE>"
+                hours = "<MISSING>"
+                country_code = "<MISSING>"
 
-            yield {
-                "locator_domain": locator_domain,
-                "page_url": page_url,
-                "location_name": location_name,
-                "latitude": latitude,
-                "longitude": longitude,
-                "city": city,
-                "store_number": store_number,
-                "street_address": address,
-                "state": state,
-                "zip": zipp,
-                "phone": phone,
-                "location_type": location_type,
-                "hours": hours,
-                "country_code": country_code,
-            }
+                yield {
+                    "locator_domain": locator_domain,
+                    "page_url": page_url,
+                    "location_name": location_name,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "city": city,
+                    "store_number": store_number,
+                    "street_address": address,
+                    "state": state,
+                    "zip": zipp,
+                    "phone": phone,
+                    "location_type": location_type,
+                    "hours": hours,
+                    "country_code": country_code,
+                }
 
-        else:
-            time.sleep(1)
-            test = driver.execute_script(
-                "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
-            )
+            else:
+                time.sleep(1)
+                test = driver.execute_script(
+                    "var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {}; var network = performance.getEntries() || {}; return network;"
+                )
 
-            found = 0
-            for item in test:
-                if "base64" in item["name"] and "marker-list" in item["name"]:
-                    x = x + 1
-                    log.info("new map")
+                found = 0
+                for item in test:
+                    if "base64" in item["name"] and "marker-list" in item["name"]:
+                        x = x + 1
+                        log.info("new map")
+                        log.info(driver.current_url)
+                        locations = new_map_page(driver)
+                        found = 1
+                        if len(locations) == 0:
+                            log.info("")
+                            log.info("new map")
+                            log.info(driver.current_url)
+                        for loc in locations:
+                            yield loc
+
+                        break
+
+                if found == 0:
+                    log.info("old map")
                     log.info(driver.current_url)
-                    locations = new_map_page(driver)
-                    found = 1
+                    locations = old_map_page(driver)
                     if len(locations) == 0:
                         log.info("")
-                        log.info("new map")
+                        log.info("old map")
                         log.info(driver.current_url)
                     for loc in locations:
                         yield loc
+                    y = y + 1
 
-                    break
-
-            if found == 0:
-                log.info("old map")
-                log.info(driver.current_url)
-                locations = old_map_page(driver)
-                if len(locations) == 0:
-                    log.info("")
-                    log.info("old map")
-                    log.info(driver.current_url)
-                for loc in locations:
-                    yield loc
-                y = y + 1
-
-    log.info(x)
-    log.info(y)
+        log.info(x)
+        log.info(y)
 
 
 def scrape():
