@@ -12,6 +12,7 @@ import time
 from bs4 import BeautifulSoup as bs
 import json
 
+ssl._create_default_https_context = ssl._create_unverified_context
 log = sglog.SgLogSetup().get_logger(logger_name="hqoffice")
 
 
