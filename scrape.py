@@ -243,10 +243,10 @@ def get_data():
             log.info(driver.current_url)
         for loc in locations:
             yield loc
-        y = y + 1
+        # y = y + 1
 
-    log.info(x)
-    log.info(y)
+    # log.info(x)
+    # log.info(y)
 
 def scrape():
     field_defs = sp.SimpleScraperPipeline.field_definitions(
