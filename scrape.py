@@ -2,7 +2,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from sgselenium.sgselenium import SgChrome
-from webdriver_manager.chrome import ChromeDriverManager
 from sgrequests import SgRequests
 from sgscrape import simple_scraper_pipeline as sp
 from sgpostal.sgpostal import parse_address_intl
@@ -304,7 +303,9 @@ def get_data():
         "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
     )
     class_name = "inside-page-hero"
-    with SgChrome(user_agent=user_agent, is_headless=True, block_third_parties=False) as driver:
+    with SgChrome(
+        user_agent=user_agent, is_headless=True, block_third_parties=False
+    ) as driver:
         driver.maximize_window()
         for page_url in page_urls:
             count = 0
