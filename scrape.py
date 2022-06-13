@@ -9,7 +9,12 @@ ssl._create_default_https_context = ssl._create_unverified_context
 def get_data():
     with SgChrome(is_headless=True, block_third_parties=True) as driver:
         time.sleep(2)
-        driver.find_element_by_class_name('sc-7d5fe5c2-0.sc-e1bb3b0d-6.jmEYpy.yYTef').click()
+        buttons = driver.find_elements_by_class_name('button')
+        for button in buttons:
+            if "view all locations" in button.text.lower():
+                button.click()
+                print("here")
+                break
         time.sleep(2)
 
         data = driver.execute_async_script(
