@@ -7,7 +7,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_data():
-    with SgChrome(is_headless=True, block_third_parties=False) as driver:
+    with SgChrome(is_headless=True, block_third_parties=True) as driver:
         time.sleep(2)
         driver.find_element_by_xpath('//*[@id="start-of-content"]/div/div/div/div[1]/div[3]/div/button').click()
         time.sleep(2)
@@ -27,8 +27,8 @@ def get_data():
             """
         )
 
-    with open("file.txt", "w", encoding="utf-8") as output:
-        print(data, file=output)
+
+        print(data)
 
     for location in data["data"]:
         locator_domain = "wingzone.com"
