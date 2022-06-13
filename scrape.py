@@ -9,7 +9,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 def get_data():
     with SgChrome(is_headless=True, block_third_parties=True) as driver:
         time.sleep(2)
-        driver.find_element_by_xpath('//*[@id="start-of-content"]/div/div/div/div[1]/div[3]/div/button').click()
+        driver.find_element_by_class_name('sc-7d5fe5c2-0.sc-e1bb3b0d-6.jmEYpy.yYTef').click()
         time.sleep(2)
 
         data = driver.execute_async_script(
@@ -103,5 +103,5 @@ def scrape():
 if __name__ == "__main__":
     scrape()
 
-# "sc-7d5fe5c2-0 sc-e1bb3b0d-6 jmEYpy yYTef"
+# "sc-7d5fe5c2-0.sc-e1bb3b0d-6.jmEYpy.yYTef"
 # "sc-7d5fe5c2-0 sc-e1bb3b0d-6 jmEYpy yYTef"
