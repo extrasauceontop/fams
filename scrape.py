@@ -90,7 +90,7 @@ def get_data():
                 if page_url in page_urls:
                     continue
                 page_urls.append(page_url)
-                page_response = session.get(page_url)
+                page_response = session.get(page_url).text
                 json_objects = extract_json(page_response)
 
                 for item in json_objects:
