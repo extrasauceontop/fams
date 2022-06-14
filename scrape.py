@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup as bs
 import os
+from proxyfier import ProxyProviders
 
 
 def get_data():
@@ -17,7 +18,7 @@ def get_data():
         expected_search_radius_miles=100,
         max_search_distance_miles=5000,
     )
-    session = SgRequests()
+    session = SgRequests(proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER)
     url = "https://www.servicemasterclean.com/locations/?CallAjax=GetLocations"
     x = 0
     for search_code in search:
@@ -75,6 +76,7 @@ def get_data():
                     with SgFirefox(
                         block_third_parties=False,
                         is_headless=True,
+                        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER
                     ) as driver:
                         driver.get(page_url)
                         element = driver.find_element_by_id(
