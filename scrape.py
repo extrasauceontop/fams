@@ -30,6 +30,7 @@ def extract_json(html_string):
 
 
 def get_data():
+    page_urls = []
     search = DynamicGeoSearch(
         country_codes=[SearchableCountries.BRITAIN],
         granularity=Grain_8(),
@@ -86,6 +87,9 @@ def get_data():
 
                 location_type = "<MISSING>"
 
+                if page_url in page_urls:
+                    continue
+                page_urls.append(page_url)
                 page_response = session.get(page_url)
                 json_objects = extract_json(page_response)
 
