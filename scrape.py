@@ -102,8 +102,11 @@ def get_data():
                         for day in hour_object["dayOfWeek"]:
                             sta = hour_object["opens"]
                             end = hour_object["closes"]
-
-                            hours = hours + day + " " + sta + "-" + end + ", "
+                            if sta == "" and end == "":
+                                hours = hours + day + " closed, "
+                            
+                            else:
+                                hours = hours + day + " " + sta + "-" + end + ", "
                     
                     hours = hours[:-2]
                     phone = item["telephone"]
