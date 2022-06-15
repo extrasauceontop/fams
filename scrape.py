@@ -109,7 +109,9 @@ def get_data():
                                 hours = hours + day + " " + sta + "-" + end + ", "
                     
                     hours = hours[:-2]
+                    print(hours)
                     phone = item["telephone"]
+                    break
 
 
                 yield {
