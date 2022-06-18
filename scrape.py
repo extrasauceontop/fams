@@ -1,106 +1,87 @@
-import unicodedata
-from sglogging import sglog
-from bs4 import BeautifulSoup
+import re
+import json
+from lxml import etree
+
 from sgrequests import SgRequests
-from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
-from sgpostal.sgpostal import parse_address_intl
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-
-session = SgRequests()
-website = "cosmo-gmbh_de"
-log = sglog.SgLogSetup().get_logger(logger_name=website)
-
-headers = {
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
-}
-
-DOMAIN = "https://www.cosmo-gmbh.de/beautyhairshop"
-MISSING = SgRecord.MISSING
-
-
-def strip_accents(text):
-
-    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
-
-    return str(text)
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
 
 def fetch_data():
-    if True:
-        url = "https://www.cosmo-gmbh.de/standorte"
-        r = session.get(url, headers=headers)
-        print(r.text)
-        loclist = r.text.split("var locations = [")[1].split("];")[0].split("],")[:-1]
-        for loc in loclist:
-            loc = loc.replace("['", "")
-            loc = BeautifulSoup(loc, "html.parser")
-            location_name = strip_accents(
-                loc.get_text(separator="|", strip=True).split("|")[0]
-            )
-            page_url = loc.findAll("a")[-1]["href"]
-            if "beautyhairshop" in page_url:
-                log.info(page_url)
-                r = session.get(page_url, headers=headers)
-                soup = BeautifulSoup(r.text, "html.parser")
-                temp = soup.findAll("div", {"class": "salons-two-column"})
-                address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
-                address = address.split("Telefon:")
-                phone = address[-1]
-                raw_address = (
-                    strip_accents(address[0]).replace("COSMO", "").replace("Shop", "")
-                )
-                pa = parse_address_intl(raw_address)
+    session = SgRequests()
+    domain = "dillards.com"
+    start_url = "https://www.dillards.com/stores"
 
-                street_address = pa.street_address_1
-                street_address = street_address if street_address else MISSING
+    headers = {
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36",
+    }
+    response = session.get(start_url, headers=headers)
+    dom = etree.HTML(response.text)
 
-                city = pa.city
-                city = city.strip() if city else MISSING
+    all_poi_urls = dom.xpath('//div[@id="storeListing"]//a[@class="underline"]/@href')
+    for url in all_poi_urls:
+        page_url = "https://www.dillards.com" + url
+        store_response = session.get(page_url)
+        store_dom = etree.HTML(store_response.text)
+        store_data = store_dom.xpath('//div[@id="storeDetails"]/script/text()')[0]
+        store_data = json.loads(store_data)
 
-                state = pa.state
-                state = state.strip() if state else MISSING
+        location_name = store_data["name"]
+        street_address = store_data["address"]["streetAddress"]
+        city = store_data["address"]["addressLocality"]
+        state = store_data["address"]["addressRegion"]
+        zip_code = store_data["address"]["postalCode"]
+        store_number = store_data["url"].split("/")[-1]
+        phone = store_data["telephone"]
+        location_type = store_data["@type"]
 
-                zip_postal = pa.postcode
-                zip_postal = zip_postal.strip() if zip_postal else MISSING
+        geo_data = store_dom.xpath(
+            '//script[contains(text(), "__INITIAL_STATE__")]/text()'
+        )[0]
+        geo_data = re.findall("__INITIAL_STATE__ =(.+);", geo_data)[0]
+        geo_data = json.loads(geo_data)
+        latitude = geo_data["contentData"]["store"]["latitude"]
+        longitude = geo_data["contentData"]["store"]["longitude"]
+        hoo = []
+        for elem in store_data["openingHoursSpecification"]:
+            day = elem["dayOfWeek"]["name"]
+            opens = elem["opens"]
+            closes = elem["closes"]
+            hoo.append(f"{day} {opens} - {closes}")
+        hours_of_operation = ", ".join(hoo) if hoo else ""
 
-                hours_of_operation = strip_accents(
-                    temp[1].get_text(separator="|", strip=True).replace("|", " ")
-                )
-                country_code = "DE"
-                yield SgRecord(
-                    locator_domain=DOMAIN,
-                    page_url=page_url,
-                    location_name=location_name,
-                    street_address=street_address,
-                    city=city,
-                    state=state,
-                    zip_postal=zip_postal,
-                    country_code=country_code,
-                    store_number=MISSING,
-                    phone=phone,
-                    location_type=MISSING,
-                    latitude=MISSING,
-                    longitude=MISSING,
-                    hours_of_operation=hours_of_operation,
-                    raw_address=raw_address,
-                )
+        item = SgRecord(
+            locator_domain=domain,
+            page_url=page_url,
+            location_name=location_name,
+            street_address=street_address,
+            city=city,
+            state=state,
+            zip_postal=zip_code,
+            country_code="",
+            store_number=store_number,
+            phone=phone,
+            location_type=location_type,
+            latitude=latitude,
+            longitude=longitude,
+            hours_of_operation=hours_of_operation,
+        )
+
+        yield item
 
 
 def scrape():
-    log.info("Started")
-    count = 0
     with SgWriter(
-        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
     ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
-            count = count + 1
-
-    log.info(f"No of records being processed: {count}")
-    log.info("Finished")
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
