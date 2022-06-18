@@ -19,6 +19,7 @@ def fetch_data():
     }
     response = session.get(start_url, headers=headers)
     print(response.text)
+    print(response.status_code)
     dom = etree.HTML(response.text)
 
     all_poi_urls = dom.xpath('//div[@id="storeListing"]//a[@class="underline"]/@href')
