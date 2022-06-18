@@ -1,170 +1,106 @@
+import unicodedata
+from sglogging import sglog
+from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-from sgscrape import simple_scraper_pipeline as sp
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_8
-import json
+from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
+from sgpostal.sgpostal import parse_address_intl
+from sgscrape.sgrecord_id import RecommendedRecordIds
+from sgscrape.sgrecord_deduper import SgRecordDeduper
+
+session = SgRequests()
+website = "cosmo-gmbh_de"
+log = sglog.SgLogSetup().get_logger(logger_name=website)
+
+headers = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+}
+
+DOMAIN = "https://www.cosmo-gmbh.de/beautyhairshop"
+MISSING = SgRecord.MISSING
 
 
-def extract_json(html_string):
-    json_objects = []
-    count = 0
+def strip_accents(text):
 
-    brace_count = 0
-    for element in html_string:
+    text = unicodedata.normalize("NFD", text).encode("ascii", "ignore").decode("utf-8")
 
-        if element == "{":
-            brace_count = brace_count + 1
-            if brace_count == 1:
-                start = count
-
-        elif element == "}":
-            brace_count = brace_count - 1
-            if brace_count == 0:
-                end = count
-                try:
-                    json_objects.append(json.loads(html_string[start : end + 1]))
-                except Exception:
-                    pass
-        count = count + 1
-
-    return json_objects
+    return str(text)
 
 
-def get_data():
-    page_urls = []
-    search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.BRITAIN],
-        granularity=Grain_8(),
-        expected_search_radius_miles=25,
-    )
-    session = SgRequests()
-    url = "https://www.bupa.co.uk/BDC/GoogleMapSearch"
+def fetch_data():
+    if True:
+        url = "https://www.cosmo-gmbh.de/standorte"
+        r = session.get(url, headers=headers)
+        loclist = r.text.split("var locations = [")[1].split("];")[0].split("],")[:-1]
+        for loc in loclist:
+            loc = loc.replace("['", "")
+            loc = BeautifulSoup(loc, "html.parser")
+            location_name = strip_accents(
+                loc.get_text(separator="|", strip=True).split("|")[0]
+            )
+            page_url = loc.findAll("a")[-1]["href"]
+            if "beautyhairshop" in page_url:
+                log.info(page_url)
+                r = session.get(page_url, headers=headers)
+                soup = BeautifulSoup(r.text, "html.parser")
+                temp = soup.findAll("div", {"class": "salons-two-column"})
+                address = temp[0].get_text(separator="|", strip=True).replace("|", " ")
+                address = address.split("Telefon:")
+                phone = address[-1]
+                raw_address = (
+                    strip_accents(address[0]).replace("COSMO", "").replace("Shop", "")
+                )
+                pa = parse_address_intl(raw_address)
 
-    for search_lat, search_lon in search:
-        x = 0
-        while True:
-            x = x + 1
-            params = {
-                "latitude": str(search_lat),
-                "longitude": str(search_lon),
-                "searchFilter": [],
-                "dataCount": "1",
-                "pageIndex": x,
-                "campaignId": None,
-            }
+                street_address = pa.street_address_1
+                street_address = street_address if street_address else MISSING
 
-            response = session.post(url, json=params)
-            try:
-                response = response.json()
-            except Exception:
-                search.found_nothing()
-                break
-            if len(response) == 0:
-                break
-            for location in response:
-                locator_domain = "www.bupa.co.uk"
-                page_url = "https://www.bupa.co.uk" + location["PageUrl"]
-                location_name = location["PageTitle"]
-                latitude = location["Latitude"]
-                longitude = location["Longitude"]
-                search.found_location_at(latitude, longitude)
-                store_number = "<MISSING>"
+                city = pa.city
+                city = city.strip() if city else MISSING
 
-                address_parts = location["FullAddress"].split(", ")
+                state = pa.state
+                state = state.strip() if state else MISSING
 
-                if len(address_parts) == 2:
-                    city = "<MISSING>"
-                    address = address_parts[0]
-                    zipp = address_parts[-1]
-                    state = "<MISSING>"
-                    country_code = "UK"
+                zip_postal = pa.postcode
+                zip_postal = zip_postal.strip() if zip_postal else MISSING
 
-                elif len(address_parts) > 2:
-                    address = "".join(part + " " for part in address_parts[:-2])
-                    city = address_parts[-2]
-                    zipp = address_parts[-1]
-                    state = "<MISSING>"
-                    country_code = "UK"
-
-                location_type = "<MISSING>"
-
-                if page_url in page_urls:
-                    continue
-                page_urls.append(page_url)
-                page_response = session.get(page_url).text
-                json_objects = extract_json(page_response)
-
-                for item in json_objects:
-                    if "openingHoursSpecification" not in item.keys():
-                        continue
-                    
-                    hours = ""
-                    for hour_object in item["openingHoursSpecification"]:
-                        for day in hour_object["dayOfWeek"]:
-                            sta = hour_object["opens"]
-                            end = hour_object["closes"]
-                            if sta == "" and end == "":
-                                hours = hours + day + " closed, "
-                            
-                            else:
-                                hours = hours + day + " " + sta + "-" + end + ", "
-                    
-                    hours = hours[:-2]
-                    print(hours)
-                    phone = item["telephone"]
-                    break
-
-
-                yield {
-                    "locator_domain": locator_domain,
-                    "page_url": page_url,
-                    "location_name": location_name,
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "city": city,
-                    "store_number": store_number,
-                    "street_address": address,
-                    "state": state,
-                    "zip": zipp,
-                    "phone": phone,
-                    "location_type": location_type,
-                    "hours": hours,
-                    "country_code": country_code,
-                }
+                hours_of_operation = strip_accents(
+                    temp[1].get_text(separator="|", strip=True).replace("|", " ")
+                )
+                country_code = "DE"
+                yield SgRecord(
+                    locator_domain=DOMAIN,
+                    page_url=page_url,
+                    location_name=location_name,
+                    street_address=street_address,
+                    city=city,
+                    state=state,
+                    zip_postal=zip_postal,
+                    country_code=country_code,
+                    store_number=MISSING,
+                    phone=phone,
+                    location_type=MISSING,
+                    latitude=MISSING,
+                    longitude=MISSING,
+                    hours_of_operation=hours_of_operation,
+                    raw_address=raw_address,
+                )
 
 
 def scrape():
-    field_defs = sp.SimpleScraperPipeline.field_definitions(
-        locator_domain=sp.MappingField(mapping=["locator_domain"]),
-        page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
-        location_name=sp.MappingField(
-            mapping=["location_name"], part_of_record_identity=True
-        ),
-        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
-        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
-        street_address=sp.MultiMappingField(
-            mapping=["street_address"], is_required=False
-        ),
-        city=sp.MappingField(
-            mapping=["city"],
-        ),
-        state=sp.MappingField(mapping=["state"], is_required=False),
-        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
-        country_code=sp.MappingField(mapping=["country_code"]),
-        phone=sp.MappingField(mapping=["phone"], is_required=False),
-        store_number=sp.MappingField(
-            mapping=["store_number"], part_of_record_identity=True
-        ),
-        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
-        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
-    )
+    log.info("Started")
+    count = 0
+    with SgWriter(
+        deduper=SgRecordDeduper(record_id=RecommendedRecordIds.PageUrlId)
+    ) as writer:
+        results = fetch_data()
+        for rec in results:
+            writer.write_row(rec)
+            count = count + 1
 
-    pipeline = sp.SimpleScraperPipeline(
-        scraper_name="Crawler",
-        data_fetcher=get_data,
-        field_definitions=field_defs,
-        log_stats_interval=15,
-    )
-    pipeline.run()
+    log.info(f"No of records being processed: {count}")
+    log.info("Finished")
 
 
-scrape()
+if __name__ == "__main__":
+    scrape()
