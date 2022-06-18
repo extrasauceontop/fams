@@ -31,6 +31,7 @@ def fetch_data():
     if True:
         url = "https://www.cosmo-gmbh.de/standorte"
         r = session.get(url, headers=headers)
+        print(r.text)
         loclist = r.text.split("var locations = [")[1].split("];")[0].split("],")[:-1]
         for loc in loclist:
             loc = loc.replace("['", "")
