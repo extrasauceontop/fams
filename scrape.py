@@ -19,7 +19,7 @@ def fetch_data():
 
         driver.get(start_url)
         response = driver.page_source
-        print(response)
+        # print(response)
         dom = etree.HTML(response)
 
         all_poi_urls = dom.xpath('//div[@id="storeListing"]//a[@class="underline"]/@href')
@@ -27,7 +27,7 @@ def fetch_data():
             page_url = "https://www.dillards.com" + url
             driver.get(page_url)
             store_response = driver.page_source
-            store_dom = etree.HTML(store_response.text)
+            store_dom = etree.HTML(store_response)
             store_data = store_dom.xpath('//div[@id="storeDetails"]/script/text()')[0]
             store_data = json.loads(store_data)
 
