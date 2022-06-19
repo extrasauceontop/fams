@@ -1,7 +1,6 @@
 import re
 import json
 from lxml import etree
-
 from sgselenium import SgChrome
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -19,10 +18,11 @@ def fetch_data():
 
         driver.get(start_url)
         response = driver.page_source
-        # print(response)
         dom = etree.HTML(response)
 
-        all_poi_urls = dom.xpath('//div[@id="storeListing"]//a[@class="underline"]/@href')
+        all_poi_urls = dom.xpath(
+            '//div[@id="storeListing"]//a[@class="underline"]/@href'
+        )
         for url in all_poi_urls:
             page_url = "https://www.dillards.com" + url
             driver.get(page_url)
