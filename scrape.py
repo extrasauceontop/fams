@@ -2,6 +2,10 @@ from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
+from proxyfier import ProxyProviders
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def get_data():
@@ -11,7 +15,7 @@ def get_data():
         granularity=Grain_4(),
     )
 
-    with SgChrome() as driver:
+    with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
         for search_lat, search_lon in search:
             url = (
                 "https://api.dineengine.io/burgerfi/custom/dineengine/vendor/olo/restaurants/near?lat="
