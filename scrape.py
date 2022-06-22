@@ -15,7 +15,7 @@ def get_data():
         granularity=Grain_4(),
     )
 
-    with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
+    with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, block_third_parties=False) as driver:
         for search_lat, search_lon in search:
             url = (
                 "https://api.dineengine.io/burgerfi/custom/dineengine/vendor/olo/restaurants/near?lat="
