@@ -1,4 +1,4 @@
-from sgselenium import SgFirefox
+from sgselenium import SgChrome
 from bs4 import BeautifulSoup as bs
 from sgscrape import simple_scraper_pipeline as sp
 from sgzip.dynamic import DynamicGeoSearch, SearchableCountries, Grain_4
@@ -11,7 +11,7 @@ def get_data():
         granularity=Grain_4(),
     )
 
-    with SgFirefox() as driver:
+    with SgChrome() as driver:
         for search_lat, search_lon in search:
             url = (
                 "https://api.dineengine.io/burgerfi/custom/dineengine/vendor/olo/restaurants/near?lat="
