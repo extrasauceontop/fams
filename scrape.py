@@ -22,6 +22,7 @@ def get_data():
             )
             driver.get(url)
             response = driver.page_source
+            print(response)
             if "Anchorage" in response:
                 print("here")
                 print("here")
