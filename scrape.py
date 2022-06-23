@@ -10,9 +10,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def get_data():
     search = DynamicGeoSearch(
-        country_codes=[SearchableCountries.USA],
-        expected_search_radius_miles=15,
-        granularity=Grain_4(),
+        country_codes=[SearchableCountries.USA]
     )
 
     with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, block_third_parties=False) as driver:
