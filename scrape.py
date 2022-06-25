@@ -43,7 +43,7 @@ def get_data():
                 locator_domain = "prismahealth.org"
                 page_url = data_url
                 location_name = location["Title"]
-
+                print(location_name)
                 address = location["Address"][0] + " " + location["Address"][1]
 
                 city = location["Address"][2].split(",")[0]
