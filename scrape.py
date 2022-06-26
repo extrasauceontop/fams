@@ -22,6 +22,6 @@ with SgRequests(
     dont_retry_status_codes=([404]), retries_with_fresh_proxy_ip=2, proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER
 ) as session:
     url = "https://www.hibbett.com/on/demandware.store/Sites-Hibbett-US-Site/default/Stores-GetNearestStores?latitude=35.8409242&longitude=-78.62285039999999&countryCode=US&distanceUnit=mi&maxdistance=25&social=false"
-    response = session.get(url).text
+    response = session.get(url)
 
-print(response)
+print(response.response.text)
