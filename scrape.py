@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup as bs
 import math
 from concurrent.futures import ThreadPoolExecutor
-from webdriver_manager.chrome import ChromeDriverManager
 import os
 import ssl
 
@@ -78,8 +77,7 @@ def fetchConcurrentList(list, occurrence=max_workers):
 
 
 def request_with_retries(url):
-    with SgRequests() as session:
-        return session.get(url, headers=_headers)
+    return session.get(url, headers=_headers)
 
 
 def fetch_data():
@@ -117,11 +115,12 @@ def fetch_data():
 
 
 if __name__ == "__main__":
-    with SgWriter(
-        SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
-        )
-    ) as writer:
-        results = fetch_data()
-        for rec in results:
-            writer.write_row(rec)
+    with SgRequests() as session:
+        with SgWriter(
+            SgRecordDeduper(
+                RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
+            )
+        ) as writer:
+            results = fetch_data()
+            for rec in results:
+                writer.write_row(rec)
