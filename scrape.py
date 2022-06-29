@@ -17,7 +17,7 @@ def fetch_data(sgw: SgWriter):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
     r = session.get(api_url, headers=headers)
-    print(r.text)
+    print(r.response.text)
     js_block = r.text.split('"locations":')[1].split(',"map_display"')[0].strip()
     js = json.loads(js_block)
     for j in js:
