@@ -5,13 +5,14 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
+from proxyfier import ProxyProviders
 
 
 def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://theoldnoconabootfactory.com/"
     api_url = "https://www.powr.io/map/u/01008607_1602195050#platform=shopify&url=https%3A%2F%2Ftheoldnoconabootfactory.com%2Fpages%2Flocations"
-    session = SgRequests()
+    session = SgRequests(proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0",
     }
