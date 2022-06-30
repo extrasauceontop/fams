@@ -61,6 +61,7 @@ def fetch_data():
     print(contents)
     for row in contents:
         url = row["href"]
+        print(url)
         zip_code = url.split("/")[-1]
         stores = session.get(API_URL.format(zip_code), headers=HEADERS).json()
         data = stores["locations"][0]
