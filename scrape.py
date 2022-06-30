@@ -59,8 +59,8 @@ def fetch_data():
     soup = pull_content(LOCATION_URL)
     contents = ["https://fastpaydayloansfloridainc.com" + a_tag["href"] for a_tag in soup.find("div", {"id": "leftcontent"}).find_all("a") if "florida-payday-loan-locations" in a_tag["href"]]
     for url in contents:
-        print(url)
         zip_code = url.split("/")[-1]
+        print(API_URL.format(zip_code))
         stores = session.get(API_URL.format(zip_code), headers=HEADERS)
         print(stores)
         print(stores.response.text)
