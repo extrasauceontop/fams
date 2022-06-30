@@ -57,15 +57,8 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    print(soup)
-    contents = soup.find("div", {"id": "leftcontent"}).find_all(
-        "a",
-        {
-            "href": re.compile(
-                r"https:\/\/fastpaydayloansfloridainc.com\/florida-payday-loan-locations.*"
-            )
-        },
-    )
+    contents = [a_tag for a_tag in soup.find("div", {"id": "leftcontent"}).find_all("a") if "Payday Loans" in a_tag.text.strip()]
+    print(contents)
     for row in contents:
         url = row["href"]
         zip_code = url.split("/")[-1]
