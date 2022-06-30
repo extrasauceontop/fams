@@ -57,7 +57,7 @@ def pull_content(url):
 def fetch_data():
     log.info("Fetching store_locator data")
     soup = pull_content(LOCATION_URL)
-    contents = [a_tag for a_tag in soup.find("div", {"id": "leftcontent"}).find_all("a") if "Payday Loans" in a_tag.text.strip()]
+    contents = [a_tag["href"] for a_tag in soup.find("div", {"id": "leftcontent"}).find_all("a") if "Payday" in a_tag.text.strip().split(" ")[0].lower() and a_tag["href"] != "/"]
     print(contents)
     for row in contents:
         url = row["href"]
