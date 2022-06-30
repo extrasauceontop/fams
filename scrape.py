@@ -63,7 +63,7 @@ def fetch_data():
         zip_code = url.split("/")[-1]
         stores = session.get(API_URL.format(zip_code), headers=HEADERS)
         print(stores)
-        print(stores.response.test)
+        print(stores.response.text)
         stores = stores.json()
         data = stores["locations"][0]
         store_number = data["store_code"]
