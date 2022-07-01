@@ -10,7 +10,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from webdriver_manager.chrome import ChromeDriverManager
-
+from sgselenium import SgChromeForCloudflare
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -27,9 +27,7 @@ def fetch_data(sgw: SgWriter):
     options = uc.ChromeOptions()
     options.headless = True
 
-    with uc.Chrome(
-        driver_executable_path=ChromeDriverManager().install(), options=options
-    ) as driver:
+    with SgChromeForCloudflare() as driver:
         for i in range(10):
             log.info(f"Loading main page {base_link}")
             driver.get(base_link)

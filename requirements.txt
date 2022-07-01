@@ -6,3 +6,4 @@ lxml==4.6.2
 beautifulsoup4==4.11.1
 undetected-chromedriver==3.1.5.post4
 webdriver-manager==3.7.0
+sgselenium==0.6.0
