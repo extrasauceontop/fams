@@ -11,7 +11,7 @@ def fetch_data(sgw: SgWriter):
 
     for i in range(100):
         print(i)
-        data = f'-----------------------------335590349241424249481678125346\r\nContent-Disposition: form-data; name="searchString"\r\n\r\n*\r\n-----------------------------335590349241424249481678125346\r\nContent-Disposition: form-data; name="page"\r\n\r\n{i}\r\n-----------------------------335590349241424249481678125346\r\nContent-Disposition: form-data; name="city"\r\n\r\n\r\n-----------------------------335590349241424249481678125346\r\nContent-Disposition: form-data; name="pageSize"\r\n\r\n50\r\n-----------------------------335590349241424249481678125346--\r\n'
+        data = f'-----------------------------335590349241424249481678125346\r\nContent-Disposition: form-data; name="searchString"\r\n\r\n*\r\n-----------------------------335590349241424249481678125346\r\nContent-Disposition: form-data; name="page"\r\n\r\n{74}\r\n-----------------------------335590349241424249481678125346\r\nContent-Disposition: form-data; name="city"\r\n\r\n\r\n-----------------------------335590349241424249481678125346\r\nContent-Disposition: form-data; name="pageSize"\r\n\r\n50\r\n-----------------------------335590349241424249481678125346--\r\n'
         r = session.post(api, headers=headers, data=data)
         try:
             js = r.json()["markets"]
