@@ -20,7 +20,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 def fetch_data(sgw: SgWriter):
 
-    base_link = "https://www.brookshires.com/stores/?coordinates=39.84686380709379,-106.87749199999999&zoom=5"
+    base_link = "https://www.brookshires.com/stores/?coordinates=39.84686380709379,-106.87749199999999&zoom=6"
 
     with SgFirefox(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, block_third_parties=False) as driver:
         for i in range(10):
