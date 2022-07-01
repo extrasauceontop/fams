@@ -33,8 +33,9 @@ def fetch_data(sgw: SgWriter):
         for i in range(10):
             log.info(f"Loading main page {base_link}")
             driver.get(base_link)
+            print(driver.page_source)
             try:
-                WebDriverWait(driver, 120).until(
+                WebDriverWait(driver, 30).until(
                     EC.presence_of_element_located(
                         (By.CLASS_NAME, "store-list__scroll-container")
                     )
