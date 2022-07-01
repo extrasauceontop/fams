@@ -6,6 +6,8 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgselenium import SgChromeForCloudFlare
+from proxyfier import ProxyProviders
+
 log = sglog.SgLogSetup().get_logger(logger_name="brookshires.com")
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -15,7 +17,7 @@ def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.brookshires.com/stores/?coordinates=39.84686380709379,-106.87749199999999&zoom=6"
 
-    with SgChromeForCloudFlare() as driver:
+    with SgChromeForCloudFlare(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
 
         log.info(f"Loading main page {base_link}")
         driver.get(base_link)
