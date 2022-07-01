@@ -1,20 +1,11 @@
 import ssl
-import time
-
-import undetected_chromedriver as uc
-
 from bs4 import BeautifulSoup
 from sglogging import sglog
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from webdriver_manager.chrome import ChromeDriverManager
 from sgselenium import SgChromeForCloudflare
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
 log = sglog.SgLogSetup().get_logger(logger_name="brookshires.com")
 
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -24,30 +15,18 @@ def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.brookshires.com/stores/?coordinates=39.84686380709379,-106.87749199999999&zoom=6"
 
-    options = uc.ChromeOptions()
-    options.headless = True
-
     with SgChromeForCloudflare() as driver:
-        for i in range(10):
-            log.info(f"Loading main page {base_link}")
-            driver.get(base_link)
-            print(driver.page_source)
-            try:
-                WebDriverWait(driver, 30).until(
-                    EC.presence_of_element_located(
-                        (By.CLASS_NAME, "store-list__scroll-container")
-                    )
-                )
-                time.sleep(10)
-                soup = BeautifulSoup(driver.page_source, "lxml")
-                grids = soup.find(
-                    "div", class_="store-list__scroll-container"
-                ).find_all("li")
-                if grids:
-                    log.info("Got Grids")
-                    break
-            except:
-                pass
+
+        log.info(f"Loading main page {base_link}")
+        driver.get(base_link)
+        print(driver.page_source)
+
+        soup = BeautifulSoup(driver.page_source, "lxml")
+        grids = soup.find(
+            "div", class_="store-list__scroll-container"
+        ).find_all("li")
+        if grids:
+            log.info("Got Grids")
 
         for grid in grids:
             name = grid.find("span", {"class": "store-name"}).text.strip()
@@ -63,19 +42,10 @@ def fetch_data(sgw: SgWriter):
                 + "/"
                 + grid["id"].split("-")[-1]
             )
-            time.sleep(2)
-            for i in range(10):
-                driver.get(page_url)
-                log.info("Pull content => " + page_url)
-                try:
-                    WebDriverWait(driver, 30).until(
-                        EC.presence_of_element_located(
-                            (By.CLASS_NAME, "store-details-store-hours__content")
-                        )
-                    )
-                    break
-                except:
-                    time.sleep(10)
+
+
+            driver.get(page_url)
+            log.info("Pull content => " + page_url)
 
             location_soup = BeautifulSoup(driver.page_source, "lxml")
 
