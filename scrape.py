@@ -16,7 +16,7 @@ with SgFirefox(is_headless=True, block_third_parties=False, proxy_provider_escal
     response = driver.page_source
 
 soup = bs(response, "html.parser")
-grids = soup.find_all("div", attrs={"aria-controls": "store-details-pane"})
+grids = soup.find_all("store-details-preview", attrs={"aria-controls": "store-details-pane"})
 print(len(grids))
 
 
