@@ -14,7 +14,7 @@ while True:
     try:
         with SgFirefox(is_headless=True, block_third_parties=False, proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
             driver.get(url)
-            WebDriverWait(driver, 120).until(
+            WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located(
                     (By.CLASS_NAME, "address1")
                 )

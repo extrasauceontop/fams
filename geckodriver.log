@@ -12,3 +12,21 @@ JavaScript error: resource://services-settings/Attachments.jsm, line 19: Downloa
 1656873063741	Marionette	INFO	Stopped listening on port 49354
 [Parent 1608, IPC I/O Parent] WARNING: file /builds/worker/checkouts/gecko/ipc/chromium/src/base/process_util_win.cc:167
 [Parent 1608, IPC I/O Parent] WARNING: file /builds/worker/checkouts/gecko/ipc/chromium/src/base/process_util_win.cc:167
+1656882949886	geckodriver	INFO	Listening on 127.0.0.1:59609
+1656882952946	mozrunner::runner	INFO	Running command: "C:\\Program Files\\Mozilla Firefox\\firefox.exe" "--marionette" "-headless" "--no-sandbox" "--disable-gpu" "--disable-dev-shm-usage" "--start-maximized" "--user-agent=Mozilla/5.0 (X11; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0" "--remote-debugging-port" "59610" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "C:\\Users\\TAYLOR~1\\AppData\\Local\\Temp\\rust_mozprofilemZn8KI"
+*** You are running in headless mode.
+1656882953159	Marionette	INFO	Marionette enabled
+WebDriver BiDi listening on ws://localhost:59610
+[GFX1-]: RenderCompositorSWGL failed mapping default framebuffer, no dt
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at C:\\Users\\TAYLOR~1\\AppData\\Local\\Temp\\rust_mozprofilemZn8KI\\search.json.mozlz4", (void 0)))
+1656882953842	Marionette	INFO	Listening on port 59637
+DevTools listening on ws://localhost:59610/devtools/browser/9b2a3fc3-017a-4ddc-8e8f-9fb0b5c07f5a
+Read port: 59637
+1656882953944	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+1656882953946	RemoteAgent	INFO	Proxy settings initialised: {"proxyType":"manual","httpProxy":"127.0.0.1:59608","sslProxy":"127.0.0.1:59608"}
+JavaScript error: resource://services-settings/Attachments.jsm, line 19: DownloadError: Could not download https://firefox-settings-attachments.cdn.mozilla.net/main-workspace/quicksuggest/c531d3ca-db81-4c48-83c3-8e9b586df0e2.jpg
+A content process crashed and MOZ_CRASHREPORTER_SHUTDOWN is set, shutting down
+[Parent 28840, IPC I/O Parent] WARNING: pipe error: 232: file /builds/worker/checkouts/gecko/ipc/chromium/src/chrome/common/ipc_channel_win.cc:554
+JavaScript error: resource:///modules/sessionstore/SessionStore.jsm, line 2122: TypeError: subject.QueryInterface is not a function
+A content process crashed and MOZ_CRASHREPORTER_SHUTDOWN is set, shutting down
+1656883082044	Marionette	INFO	Stopped listening on port 59637
