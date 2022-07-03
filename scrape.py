@@ -20,5 +20,3 @@ grids = soup.find_all("div", attrs={"aria-controls": "store-details-pane"})
 print(len(grids))
 
 
-print(response)
-
