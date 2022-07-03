@@ -11,7 +11,6 @@ from sgselenium import SgFirefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from proxyfier import ProxyProviders
 
 log = sglog.SgLogSetup().get_logger(logger_name="brookshires.com")
 
@@ -22,7 +21,10 @@ def fetch_data(sgw: SgWriter):
 
     base_link = "https://www.brookshires.com/stores/?coordinates=39.84686380709379,-106.87749199999999&zoom=6"
 
-    with SgFirefox(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, block_third_parties=False) as driver:
+    with SgFirefox(
+        is_headless=True,
+        block_third_parties=False,
+    ) as driver:
         for i in range(10):
             log.info(f"Loading main page {base_link}")
             driver.get(base_link)
