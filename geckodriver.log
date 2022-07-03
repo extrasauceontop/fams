@@ -1,0 +1,14 @@
+1656873042889	geckodriver	INFO	Listening on 127.0.0.1:49328
+1656873045948	mozrunner::runner	INFO	Running command: "C:\\Program Files\\Mozilla Firefox\\firefox.exe" "--marionette" "--no-sandbox" "--disable-gpu" "--disable-dev-shm-usage" "--start-maximized" "--user-agent=Mozilla/5.0 (X11; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0" "--remote-debugging-port" "49329" "--remote-allow-hosts" "localhost" "-no-remote" "-profile" "C:\\Users\\TAYLOR~1\\AppData\\Local\\Temp\\rust_mozprofileeE5lOj"
+1656873046157	Marionette	INFO	Marionette enabled
+WebDriver BiDi listening on ws://localhost:49329
+console.warn: SearchSettings: "get: No settings file exists, new profile?" (new NotFoundError("Could not open the file at C:\\Users\\TAYLOR~1\\AppData\\Local\\Temp\\rust_mozprofileeE5lOj\\search.json.mozlz4", (void 0)))
+1656873047292	Marionette	INFO	Listening on port 49354
+DevTools listening on ws://localhost:49329/devtools/browser/8332ef84-61e8-4923-af23-634e2aa1cb79
+Read port: 49354
+1656873047382	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
+1656873047384	RemoteAgent	INFO	Proxy settings initialised: {"proxyType":"manual","httpProxy":"127.0.0.1:49327","sslProxy":"127.0.0.1:49327"}
+JavaScript error: resource://services-settings/Attachments.jsm, line 19: DownloadError: Could not download https://firefox-settings-attachments.cdn.mozilla.net/main-workspace/quicksuggest/c531d3ca-db81-4c48-83c3-8e9b586df0e2.jpg
+1656873063741	Marionette	INFO	Stopped listening on port 49354
+[Parent 1608, IPC I/O Parent] WARNING: file /builds/worker/checkouts/gecko/ipc/chromium/src/base/process_util_win.cc:167
+[Parent 1608, IPC I/O Parent] WARNING: file /builds/worker/checkouts/gecko/ipc/chromium/src/base/process_util_win.cc:167

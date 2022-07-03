@@ -14,6 +14,6 @@ with SgFirefox(is_headless=False, block_third_parties=True, proxy_provider_escal
     )
     response = driver.page_source
 
-
-print(response)
+with open("file.txt", "w", encoding="utf-8") as output:
+    print(response, file=output)
 
