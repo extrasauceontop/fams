@@ -27,6 +27,9 @@ while True:
 
 soup = bs(response, "html.parser")
 grids = soup.find_all("store-details-preview", attrs={"aria-controls": "store-details-pane"})
-print(len(grids))
+
+for grid in grids:
+    location_name = grid.find("span", attrs={"class": "name"}).text.strip()
+    print(location_name)
 
 
