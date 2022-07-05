@@ -1,116 +1,122 @@
-from datetime import datetime, timedelta
-from sgscrape.sgrecord import SgRecord
+import json
+import ssl
+
+from bs4 import BeautifulSoup
+
+from sgselenium.sgselenium import SgChrome
+
 from sgscrape.sgwriter import SgWriter
+from sgscrape.sgrecord import SgRecord
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgzip.dynamic import DynamicGeoSearch, SearchableCountries
 from proxyfier import ProxyProviders
-from sgselenium import SgChrome
-from proxyfier import ProxyProviders
-import ssl
-import json
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
-def extract_json(html_string):
-    json_objects = []
-    count = 0
+def fetch_data(sgw: SgWriter):
 
-    brace_count = 0
-    for element in html_string:
+    base_link = "https://easyhome.ca/store/all"
 
-        if element == "{":
-            brace_count = brace_count + 1
-            if brace_count == 1:
-                start = count
+    with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, block_third_parties=True, is_headless=True, proxy_country="ca") as driver:
+        driver.get(base_link)
+        text = driver.page_source
+        with open("file.txt", "w", encoding="utf-8") as output:
+            print()
+        soup = BeautifulSoup(text, "lxml")
 
-        elif element == "}":
-            brace_count = brace_count - 1
-            if brace_count == 0:
-                end = count
-                try:
-                    json_objects.append(json.loads(html_string[start : end + 1]))
-                except Exception:
-                    pass
-        count = count + 1
+        k = json.loads(soup.text, strict=False)
+        for index, i in enumerate(k):
+            st = i["address1"]
+            lat = i["latitude"]
+            log = i["longitude"]
+            postal = i["zip"].upper()
+            name = i["storeName"]
+            storeCode = i["storeCode"]
+            state = i["state"].split("-")[0]
+            city = i["city"]
+            phone = i["phone"]
+            if "saturdayClose" in i or "saturdayOpen" in i:
+                if i["saturdayOpen"] is not None:
 
-    return json_objects
+                    index = 2
+                    char = ":"
+                    saturdayOpen = (
+                        i["saturdayOpen"][:index]
+                        + char
+                        + i["saturdayOpen"][index + 1 :]
+                        + ""
+                        + str(0)
+                    )
 
+                    index1 = 2
+                    char = ":"
+                    saturdayClose = (
+                        i["saturdayClose"][:index1]
+                        + char
+                        + i["saturdayClose"][index1 + 1 :]
+                        + ""
+                        + str(0)
+                    )
 
-def fetch_data(la, ln, sgw: SgWriter):
-    url = "https://nomnom-prod-api.pieology.com/restaurants/near?lat=" + str(la) + "&long=" + str(ln) + "&radius=100&limit=500&nomnom=calendars&nomnomcalendar_from=" + calendar_from + "&nomnom_calendars_to=" + calendar_to + "&nomnom_exclude_extref=999"
-    driver.get(url)
+                    index2 = 2
+                    char = ":"
+                    weekdayOpen = (
+                        i["weekdayOpen"][:index2]
+                        + char
+                        + i["weekdayOpen"][index2 + 1 :]
+                        + ""
+                        + str(0)
+                    )
 
-    js = extract_json(driver.page_source)[0]["restaurants"]
+                    index3 = 2
+                    char = ":"
+                    weekdayClose = (
+                        i["weekdayClose"][:index3]
+                        + char
+                        + i["weekdayClose"][index3 + 1 :]
+                        + ""
+                        + str(0)
+                    )
 
-    search.found_nothing()
-    for j in js:
-        location_name = j.get("name")
-        print(location_name)
-        street_address = j.get("streetaddress")
-        city = j.get("city")
-        state = j.get("state")
-        postal = j.get("zip")
-        country_code = j.get("country")
-        phone = j.get("telephone")
-        store_number = j.get("extref")
-        latitude = j.get("latitude")
-        longitude = j.get("longitude")
+                    time = (
+                        "Mon-Fri:"
+                        + " "
+                        + str(weekdayOpen)
+                        + " - "
+                        + str(weekdayClose)
+                        + ", Sat: "
+                        + saturdayOpen.replace("90:0", "09:00")
+                        + " - "
+                        + str(saturdayClose)
+                    ).replace(
+                        "saturdayOpen None saturdayClose None weekdayOpen None weekdayClose None",
+                        "",
+                    )
 
-        if store_number == "Lab":
-            continue
+                else:
+                    time = "<MISSING>"
 
-        _tmp = []
-        try:
-            calendar = j["calendars"]["calendar"]
-        except KeyError:
-            calendar = []
-
-        for cal in calendar:
-            _type = cal.get("type") or ""
-            if _type == "business":
-                days = cal.get("ranges") or []
-                for d in days:
-                    day = d.get("weekday")
-                    start = d.get("start") or ""
-                    end = d.get("end") or ""
-                    _tmp.append(f"{day}: {start.split()[-1]}-{end.split()[-1]}")
-
-        hours_of_operation = ";".join(_tmp)
-
-        row = SgRecord(
-            location_name=location_name,
-            street_address=street_address,
-            city=city,
-            state=state,
-            zip_postal=postal,
-            country_code=country_code,
-            store_number=store_number,
-            phone=phone,
-            latitude=latitude,
-            longitude=longitude,
-            locator_domain=locator_domain,
-            hours_of_operation=hours_of_operation,
-        )
-
-        sgw.write_row(row)
+            sgw.write_row(
+                SgRecord(
+                    locator_domain="https://easyhome.ca",
+                    page_url="https://easyhome.ca/locations",
+                    location_name=name,
+                    street_address=st,
+                    city=city,
+                    state=state,
+                    zip_postal=postal,
+                    country_code="CA",
+                    store_number=storeCode,
+                    phone=phone,
+                    location_type="",
+                    latitude=lat,
+                    longitude=log,
+                    hours_of_operation=time,
+                )
+            )
 
 
 if __name__ == "__main__":
-    with SgChrome(block_third_parties=False, proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
-        locator_domain = "https://pieology.com/"
-
-        calendar_from = datetime.today().strftime("%Y%m%d")
-        calendar_to = (datetime.today() + timedelta(days=6)).strftime("%Y%m%d")
-
-        with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
-            search = DynamicGeoSearch(
-                country_codes=[SearchableCountries.USA],
-                max_search_distance_miles=200,
-                expected_search_radius_miles=100,
-                max_search_results=20,
-            )
-
-            for lat, lng in search:
-                fetch_data(lat, lng, writer)
+    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
+        fetch_data(writer)
