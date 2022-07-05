@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from sgscrape.sgrecord import SgRecord
-from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
@@ -45,6 +44,7 @@ def fetch_data(la, ln, sgw: SgWriter):
 
     js = extract_json(driver.page_source)[0]["restaurants"]
 
+    search.found_nothing()
     for j in js:
         location_name = j.get("name")
         print(location_name)
