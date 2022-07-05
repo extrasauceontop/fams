@@ -2,6 +2,6 @@
 sgscrape==0.2.9
 sgrequests==0.3.7
 lxml==4.6.2
-sgselenium==0.3.5
+sgselenium==0.6.0
 beautifulsoup4==4.10.0
 proxyfier==1.1.10
