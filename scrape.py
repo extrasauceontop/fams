@@ -20,6 +20,7 @@ def fetch_data(la, ln, sgw: SgWriter):
     )
 
     r = session.get(api, headers=headers, params=params)
+    print(r.response.text)
     js = r.json()["restaurants"]
 
     for j in js:
