@@ -1,122 +1,87 @@
-import json
-import ssl
+from lxml import etree
+from urllib.parse import urljoin
+from time import sleep
 
-from bs4 import BeautifulSoup
-
-from sgselenium.sgselenium import SgChrome
-
-from sgscrape.sgwriter import SgWriter
+from sgselenium import SgFirefox
 from sgscrape.sgrecord import SgRecord
-from sgscrape.sgrecord_id import RecommendedRecordIds
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from proxyfier import ProxyProviders
+from sgscrape.sgrecord_id import SgRecordID
+from sgscrape.sgwriter import SgWriter
 
-ssl._create_default_https_context = ssl._create_unverified_context
 
+def fetch_data():
+    start_url = "https://www.converse.com.au/allstores"
+    domain = "converse.com.au"
 
-def fetch_data(sgw: SgWriter):
+    with SgFirefox() as driver:
+        driver.get(start_url)
+        dom = etree.HTML(driver.page_source)
 
-    base_link = "https://easyhome.ca/store/all"
+        all_locations = dom.xpath('//div[@class="all-stores-list"]//a')
+        for l in all_locations:
+            location_name = l.xpath("text()")[0]
+            if "converse" not in location_name.lower():
+                continue
+            url = l.xpath("@href")[0]
+            store_url = urljoin(start_url, url)
+            driver.get(store_url)
+            sleep(20)
+            loc_dom = etree.HTML(driver.page_source)
 
-    with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, block_third_parties=True, is_headless=True, proxy_country="ca") as driver:
-        driver.get(base_link)
-        text = driver.page_source
-        with open("file.txt", "w", encoding="utf-8") as output:
-            print()
-        soup = BeautifulSoup(text, "lxml")
-
-        k = json.loads(soup.text, strict=False)
-        for index, i in enumerate(k):
-            st = i["address1"]
-            lat = i["latitude"]
-            log = i["longitude"]
-            postal = i["zip"].upper()
-            name = i["storeName"]
-            storeCode = i["storeCode"]
-            state = i["state"].split("-")[0]
-            city = i["city"]
-            phone = i["phone"]
-            if "saturdayClose" in i or "saturdayOpen" in i:
-                if i["saturdayOpen"] is not None:
-
-                    index = 2
-                    char = ":"
-                    saturdayOpen = (
-                        i["saturdayOpen"][:index]
-                        + char
-                        + i["saturdayOpen"][index + 1 :]
-                        + ""
-                        + str(0)
-                    )
-
-                    index1 = 2
-                    char = ":"
-                    saturdayClose = (
-                        i["saturdayClose"][:index1]
-                        + char
-                        + i["saturdayClose"][index1 + 1 :]
-                        + ""
-                        + str(0)
-                    )
-
-                    index2 = 2
-                    char = ":"
-                    weekdayOpen = (
-                        i["weekdayOpen"][:index2]
-                        + char
-                        + i["weekdayOpen"][index2 + 1 :]
-                        + ""
-                        + str(0)
-                    )
-
-                    index3 = 2
-                    char = ":"
-                    weekdayClose = (
-                        i["weekdayClose"][:index3]
-                        + char
-                        + i["weekdayClose"][index3 + 1 :]
-                        + ""
-                        + str(0)
-                    )
-
-                    time = (
-                        "Mon-Fri:"
-                        + " "
-                        + str(weekdayOpen)
-                        + " - "
-                        + str(weekdayClose)
-                        + ", Sat: "
-                        + saturdayOpen.replace("90:0", "09:00")
-                        + " - "
-                        + str(saturdayClose)
-                    ).replace(
-                        "saturdayOpen None saturdayClose None weekdayOpen None weekdayClose None",
-                        "",
-                    )
-
-                else:
-                    time = "<MISSING>"
-
-            sgw.write_row(
-                SgRecord(
-                    locator_domain="https://easyhome.ca",
-                    page_url="https://easyhome.ca/locations",
-                    location_name=name,
-                    street_address=st,
-                    city=city,
-                    state=state,
-                    zip_postal=postal,
-                    country_code="CA",
-                    store_number=storeCode,
-                    phone=phone,
-                    location_type="",
-                    latitude=lat,
-                    longitude=log,
-                    hours_of_operation=time,
-                )
+            location_name = loc_dom.xpath('//div[@itemprop="name"]/text()')[0]
+            str_1 = loc_dom.xpath('//span[@itemprop="shopNoUnit"]/text()')
+            str_1 = str_1[0] if str_1 else ""
+            str_2 = loc_dom.xpath('//span[@itemprop="streetNumber"]/text()')
+            str_2 = str_2[0] if str_2 else ""
+            str_3 = loc_dom.xpath('//span[@itemprop="streetAddress"]/text()')
+            str_3 = str_3[0] if str_3 else ""
+            str_4 = loc_dom.xpath('//span[@itemprop="streetType"]/text()')
+            str_4 = str_4[0] if str_4 else ""
+            street_address = f"{str_1} {str_2} {str_3} {str_4}".strip()
+            loc_raw = loc_dom.xpath('//span[@itemprop="addressLocality"]/text()')[
+                0
+            ].split(", ")
+            hoo = loc_dom.xpath('//div[@class="hours"]//ul//span/text()')
+            hoo = " ".join(hoo)
+            geo = (
+                loc_dom.xpath('//a[contains(@href, "maps/@")]/@href')[0]
+                .split("@")[-1]
+                .split(",")[:2]
             )
+            phone = loc_dom.xpath('//span[@itemprop="telephone"]/text()')[0]
+            country_code = loc_dom.xpath('//span[@itemprop="addressCountry"]/text()')[0]
+
+            item = SgRecord(
+                locator_domain=domain,
+                page_url=store_url,
+                location_name=location_name,
+                street_address=street_address,
+                city=loc_raw[0],
+                state=loc_raw[1],
+                zip_postal=loc_raw[2],
+                country_code=country_code,
+                store_number="",
+                phone=phone,
+                location_type="",
+                latitude=geo[0],
+                longitude=geo[1],
+                hours_of_operation=hoo,
+            )
+
+            yield item
+
+
+def scrape():
+    with SgWriter(
+        SgRecordDeduper(
+            SgRecordID(
+                {SgRecord.Headers.LOCATION_NAME, SgRecord.Headers.STREET_ADDRESS}
+            )
+        )
+    ) as writer:
+        for item in fetch_data():
+            writer.write_row(item)
 
 
 if __name__ == "__main__":
-    with SgWriter(SgRecordDeduper(RecommendedRecordIds.StoreNumberId)) as writer:
-        fetch_data(writer)
+    scrape()
