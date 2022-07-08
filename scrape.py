@@ -10,7 +10,7 @@ import time
 def get_data():
     url = "https://www.galeria.de/filialen/l"
     x = 0
-    with SgFirefox(is_headless=False ) as driver:
+    with SgFirefox(is_headless=True) as driver:
         driver.get(url)
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CLASS_NAME, "ubsf_message"))
