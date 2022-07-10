@@ -1,75 +1,207 @@
 from sgselenium import SgFirefox
 from bs4 import BeautifulSoup as bs
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from sgscrape import simple_scraper_pipeline as sp
-import time
+import json
+import ssl
+from sglogging import sglog
+from sgscrape.pause_resume import CrawlStateSingleton, SerializableRequest
+import re
+import unidecode
+
+ssl._create_default_https_context = ssl._create_unverified_context
+crawl_state = CrawlStateSingleton.get_instance()
+log = sglog.SgLogSetup().get_logger(logger_name="carrefour")
+
+
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+
+                if "stores" in html_string[start : end + 1]:
+                    try:
+                        json_objects.append(json.loads(html_string[start : end + 1]))
+                    except Exception:
+                        pass
+        count = count + 1
+
+    return json_objects
+
+
+def get_urls():
+    url = "https://www.carrefour.fr/magasin"
+    with SgFirefox(
+        block_third_parties=True,
+        proxy_country="fr",
+    ) as driver:
+        driver.get(url)
+        response = driver.page_source
+        soup = bs(response, "html.parser")
+        region_urls = [
+            "https://www.carrefour.fr" + li_tag.find("a")["href"]
+            for li_tag in soup.find_all(
+                "li", attrs={"class": "store-locator-footer-list__item"}
+            )
+        ]
+        for url in region_urls:
+            log.info("url: " + url)
+            driver.get(url)
+            response = driver.page_source
+            soup = bs(response, "html.parser")
+
+            subregion_urls = [
+                "https://www.carrefour.fr" + li_tag.find("a")["href"]
+                for li_tag in soup.find_all(
+                    "li", attrs={"class": "store-locator-footer-list__item"}
+                )
+            ]
+
+            for sub_url in subregion_urls:
+                try:
+                    driver.get(sub_url)
+                    response = driver.page_source
+                    json_objects = extract_json(response)
+                    json_objects[1]["search"]["data"]["stores"]
+                except Exception:
+                    driver.get(sub_url)
+                    response = driver.page_source
+                    json_objects = extract_json(response)
+
+                for location in json_objects[1]["search"]["data"]["stores"]:
+                    page_url = "https://www.carrefour.fr" + location["storePageUrl"]
+                    if (
+                        page_url
+                        == "https://www.carrefour.fr/magasin/market-bourgoin-jallieu-rivet"
+                    ):
+                        continue
+
+                    location_name = location["name"]
+                    latitude = location["coordinates"][1]
+                    longitude = location["coordinates"][0]
+                    city = location["address"]["city"]
+                    store_number = location["storeId"]
+                    address = location["address"]["address1"].strip()
+                    zipp = location["address"]["postalCode"]
+                    location_type = location["banner"]
+
+                    if re.search(r"\d", zipp) is False:
+                        hold = city
+                        city = zipp
+                        zipp = hold
+
+                    url_to_save = (
+                        page_url
+                        + "?location_name="
+                        + str(location_name)
+                        + "&==latitude="
+                        + str(latitude)
+                        + "&==longitude="
+                        + str(longitude)
+                        + "&==city="
+                        + str(city)
+                        + "&==store_number="
+                        + str(store_number)
+                        + "&==address="
+                        + str(address)
+                        + "&==zipp="
+                        + str(zipp)
+                        + "&==location_type="
+                        + str(location_type)
+                    )
+                    url_to_save = unidecode.unidecode(url_to_save)
+                    log.info(url_to_save)
+                    crawl_state.push_request(SerializableRequest(url=url_to_save))
+
+    crawl_state.set_misc_value("got_urls", True)
 
 
 def get_data():
-    url = "https://www.galeria.de/filialen/l"
-    x = 0
-    with SgFirefox(is_headless=True) as driver:
-        driver.get(url)
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "ubsf_message"))
-        )
-        response = driver.page_source
+    try:
+        with SgFirefox(
+            block_third_parties=True,
+            proxy_country="fr",
+        ) as driver:
+            for page_url_thing in crawl_state.request_stack_iter():
+                page_url = page_url_thing.url.split("?")[0]
+                locator_domain = "carrefour.fr"
 
-        soup = bs(response, "html.parser")
-        region_links = [a_tag["href"] for a_tag in soup.find_all("a", attrs={"class": "ubsf_sitemap-group-link"})]
+                location_deets = page_url_thing.url.split("?")[1]
 
-        for region_link in region_links:
-            driver.get(region_link)
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "ubsf_sitemap-location-name"))
-            )
-            region_response = driver.page_source
-            region_soup = bs(region_response, "html.parser")
-            page_urls = [div_tag.find("a")["href"] for div_tag in region_soup.find_all("div", attrs={"class": "ubsf_sitemap-location-name"})]
-            for page_url in page_urls:
-                x = x+1
-                if x == 10:
-                    return
-                driver.get(page_url)
-                WebDriverWait(driver, 20).until(
-                    EC.presence_of_element_located((By.CLASS_NAME, "ubsf_details-details-title"))
-                )
-                time.sleep(10)
-                page_response = driver.page_source
-                page_soup = bs(page_response, "html.parser")
+                location_name = location_deets.split("location_name=")[1].split("&==")[
+                    0
+                ]
+                latitude = location_deets.split("latitude=")[1].split("&==")[0]
+                longitude = location_deets.split("longitude=")[1].split("&==")[0]
+                city = location_deets.split("city=")[1].split("&==")[0]
+                store_number = location_deets.split("store_number=")[1].split("&==")[0]
+                address = location_deets.split("address=")[1].split("&==")[0]
 
-                locator_domain = "www.galeria.de"
-                location_name = page_soup.find("h1", attrs={"class": "ubsf_details-details-title"}).text.strip()
+                try:
+                    if address[-1] == "0":
+                        address = address[:-2]
+                except Exception:
+                    address = "<MISSING>"
 
-                latitude = page_response.split('latitude":')[1].split(",")[0]
-                longitude = page_response.split('longitude":')[1].split("}")[0]
-                
-                address_parts = page_soup.find("address", attrs={"class": "ubsf_details-address"}).text.strip()
-
-                address = address_parts.split(", ")[0]
-                zipp = address_parts.split(", ")[1].split(" ")[0]
-                city = "".join(part + " " for part in address_parts.split(", ")[1].split(" ")[1:])
                 state = "<MISSING>"
-                country_code = "DE"
-                location_type = "<MISSING>"
-                phone = page_soup.find("li", attrs={"class": "ubsf_details-phone"}).text.strip().replace("+", "")
-                store_number = "<MISSING>"
-                
-                hours = ""
-                hours_parts = page_soup.find("div", attrs={"class": "ubsf_location-page-opening-hours-list"}).find_all("div", attrs={"class": "ubsf_opening-hours-day"})
+                zipp = location_deets.split("zipp=")[1].split("&==")[0]
 
-                for part in hours_parts:
-                    day = part.find("div", attrs={"class": "ubsf_left-side"}).text.strip()
-                    times = part.find("div", attrs={"class": "ubsf_right-side"}).text.strip().replace("geschlossen", "")
-                    if len(times) < 5:
-                        times = "geschlossen"
+                log.info("page_url: " + page_url)
 
-                    hours = hours + day + " " + times + ", "
-                
-                hours = hours[:-2]
+                driver.get(page_url)
+                phone_response = driver.page_source
 
+                phone_soup = bs(phone_response, "html.parser")
+                a_tags = phone_soup.find_all("a")
+
+                phone = "<MISSING>"
+                for a_tag in a_tags:
+                    if "tel:" in a_tag["href"]:
+                        phone = a_tag["href"].replace("tel:", "")
+                        break
+
+                location_type = location_deets.split("location_type=")[1].split("&==")[
+                    0
+                ]
+                country_code = "France"
+
+                if page_url != "https://www.carrefour.fr/magasin/":
+                    hours_parts = phone_soup.find_all(
+                        "li", attrs={"class": "store-page-hours__item"}
+                    )
+                    hours = ""
+
+                    try:
+                        for part in hours_parts:
+                            day = part.find(
+                                "div", attrs={"class": "store-page-hours__label"}
+                            ).text.strip()
+                            times = part.find(
+                                "div", attrs={"class": "store-page-hours__slice"}
+                            ).text.strip()
+
+                            hours = hours + day + " " + times + ", "
+
+                    except Exception:
+                        hours = hours + day + " closed, "
+
+                    hours = hours[:-2]
+                    hours = hours.replace("à", "-")
+
+                else:
+                    hours = "<MISSING>"
+                log.info(location_name)
                 yield {
                     "locator_domain": locator_domain,
                     "page_url": page_url,
@@ -87,16 +219,24 @@ def get_data():
                     "country_code": country_code,
                 }
 
+    except Exception as e:
+        log.info(e)
+        crawl_state.push_request(SerializableRequest(url=page_url_thing.url))
+        raise Exception
+
 
 def scrape():
+    if not crawl_state.get_misc_value("got_urls"):
+        get_urls()
+
     field_defs = sp.SimpleScraperPipeline.field_definitions(
         locator_domain=sp.MappingField(mapping=["locator_domain"]),
         page_url=sp.MappingField(mapping=["page_url"], part_of_record_identity=True),
         location_name=sp.MappingField(
             mapping=["location_name"], part_of_record_identity=True
         ),
-        latitude=sp.MappingField(mapping=["latitude"], part_of_record_identity=True),
-        longitude=sp.MappingField(mapping=["longitude"], part_of_record_identity=True),
+        latitude=sp.MappingField(mapping=["latitude"], is_required=False),
+        longitude=sp.MappingField(mapping=["longitude"], is_required=False),
         street_address=sp.MultiMappingField(
             mapping=["street_address"], is_required=False
         ),
@@ -123,5 +263,14 @@ def scrape():
     pipeline.run()
 
 
-scrape()
-# <div class="ubsf_sitemap-location-name"><a href="https://www.galeria.de/filialen/l/aachen/adalbertstrasse-20-30/001439">GALERIA Aachen</a></div>
+x = 0
+while True:
+    x = x + 1
+    if x == 5:
+        raise Exception("Check errors")
+    try:
+        scrape()
+        break
+
+    except Exception:
+        continue
