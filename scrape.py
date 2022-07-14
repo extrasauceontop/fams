@@ -64,14 +64,19 @@ def get_data():
             for part in phone_parts:
                 if "+" in part.text.strip():
                     phone = part.text.strip().split("+")[1].split("\n")[0]
+                    
+                    hours = ""
+                    for line in part.text.strip().split("\n"):
+                        if "AM" in line and "PM" in line:
+                            hours = hours + line + ", "
+                        
                     break
             print(phone)
-
-            hours = "<LATER>"
 
             address = address.replace(" None", "")
             location_type = "<MISSING>"
             store_number = "<MISSING>"
+            hours = hours[:-2]
 
             yield {
                 "locator_domain": locator_domain,
