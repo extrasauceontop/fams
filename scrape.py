@@ -88,7 +88,7 @@ def scrape():
             mapping=["longitude"],
         ),
         street_address=sp.MultiMappingField(
-            mapping=["street_address"], is_required=False
+            mapping=["street_address"], part_of_record_identity=True
         ),
         city=sp.MappingField(
             mapping=["city"],
