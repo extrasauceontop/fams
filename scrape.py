@@ -60,11 +60,13 @@ def get_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 
-            phone_part = page_soup.find("p", attrs={"class": "p-container lt1"}).text.strip()
-            print(phone_part)
-            phone = phone_part.split("+")[1].split("\n")[0]
+            phone_parts = page_soup.find_all("p", attrs={"class": "p-container lt1"})
+            for part in phone_parts:
+                if "+" in part.text.strip():
+                    phone = part.test.strip().split("+")[1].split("\n")[0]
+                    break
             print(phone)
-            phone = "<LATER>"
+
             hours = "<LATER>"
 
             address = address.replace(" None", "")
