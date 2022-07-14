@@ -49,6 +49,7 @@ def get_data():
             if country_code is None:
                 country_code = "<MISSING>"
 
+            print(page_url)
             page_response = session.get(page_url).text
             page_soup = bs(page_response, "html.parser")
 
