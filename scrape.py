@@ -49,13 +49,18 @@ def get_data():
         if country_code is None:
             country_code = "<MISSING>"
 
-        latitude = "<LATER>"
-        longitude = "<LATER>"
-        store_number = "<LATER>"
+        page_response = session.get(page_url).text
+        page_soup = bs(page_response, "html.parser")
+
+        latitude = page_response.split("2!3d")[1].split("!")[0]
+        longitude = page_response.split("2!3d")[1].split("!4d")[1].split('"')[0]
+
         phone = "<LATER>"
-        location_type = "<LATER>"
         hours = "<LATER>"
+
         address = address.replace(" None", "")
+        location_type = "<MISSING>"
+        store_number = "<MISSING>"
 
         yield {
             "locator_domain": locator_domain,
