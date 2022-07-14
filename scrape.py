@@ -53,8 +53,12 @@ def get_data():
             page_response = session.get(page_url).text
             page_soup = bs(page_response, "html.parser")
 
-            latitude = page_response.split("2!3d")[1].split("!")[0]
-            longitude = page_response.split("2!3d")[1].split("!4d")[1].split('"')[0]
+            try:
+                latitude = page_response.split("2!3d")[1].split("!")[0]
+                longitude = page_response.split("2!3d")[1].split("!4d")[1].split('"')[0]
+            except Exception:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
 
             phone = "<LATER>"
             hours = "<LATER>"
