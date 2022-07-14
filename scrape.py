@@ -105,7 +105,7 @@ def get_data():
             location_type = "<MISSING>"
             store_number = "<MISSING>"
 
-            if hours == "<MISSING>":
+            if "<MISSING>" in hours:
                 hours_json = extract_json(page_response.split("openingHoursSpecification")[1])
                 print(hours_json)
                 print("")
