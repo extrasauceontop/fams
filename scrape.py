@@ -105,6 +105,11 @@ def get_data():
             location_type = "<MISSING>"
             store_number = "<MISSING>"
 
+            if hours == "<MISSING>":
+                hours_json = extract_json(page_response.split("openingHoursSpecification"))
+                print(hours_json)
+                print("")
+
             yield {
                 "locator_domain": locator_domain,
                 "page_url": page_url,
