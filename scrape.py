@@ -109,6 +109,9 @@ def get_data():
                 hours_json = extract_json(page_response.split("openingHoursSpecification")[1])
                 print(hours_json)
                 print("")
+            
+            else:
+                print(hours)
 
             yield {
                 "locator_domain": locator_domain,
