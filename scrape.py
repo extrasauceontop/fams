@@ -1,113 +1,118 @@
-from typing import Iterable, Tuple, Callable
-from sgscrape.sgrecord_id import RecommendedRecordIds
-from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgscrape.sgrecord import SgRecord
-from sgscrape.sgwriter import SgWriter
-from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_4
-from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
-from proxyfier import ProxyProviders
+from bs4 import BeautifulSoup as bs
+from sgscrape import simple_scraper_pipeline as sp
+import unidecode
+from sgpostal.sgpostal import parse_address_intl
+
+def get_data():
+    url ="https://www.razer.com/razerstores"
+    with SgRequests() as session:
+        response = session.get(url).text.replace("<br>", "\n")
+
+    soup = bs(response, "html.parser")
+    grids = soup.find_all("div", attrs={"class": "store"})
+
+    for grid in grids:
+        locator_domain = "razer.com"
+        page_url = "https://www.razer.com" + grid.find("a", attrs={"class": "gtm_learn_more"})["href"][1:]
+        location_name = grid.find("div", attrs={"class": "address"}).find("strong").text.strip().replace("\n", " ")
+
+        address_parts = grid.find("div", attrs={"class": "address"}).find("p")
+        first_line = address_parts.find("span").text.strip()
+        full_address = address_parts.text.strip()
+        raw_address = unidecode.unidecode(full_address.replace(first_line, first_line + " ")).replace("\n", " ").replace("\t", "").replace("\r", "")
+        while "  " in raw_address:
+            raw_address = raw_address.replace("  ", " ")
+
+        addr = parse_address_intl(full_address)
+        city = addr.city
+        if city is None:
+            city = "<MISSING>"
+
+        address_1 = addr.street_address_1
+        address_2 = addr.street_address_2
+
+        if address_1 is None and address_2 is None:
+            address = "<MISSING>"
+        else:
+            address = (str(address_1) + " " + str(address_2)).strip()
+
+        state = addr.state
+        if state is None:
+            state = "<MISSING>"
+
+        zipp = addr.postcode
+        if zipp is None:
+            zipp = "<MISSING>"
+
+        country_code = addr.country
+        if country_code is None:
+            country_code = "<MISSING>"
+
+        latitude = "<LATER>"
+        longitude = "<LATER>"
+        store_number = "<LATER>"
+        phone = "<LATER>"
+        location_type = "<LATER>"
+        hours = "<LATER>"
+
+        yield {
+            "locator_domain": locator_domain,
+            "page_url": page_url,
+            "location_name": location_name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "city": city,
+            "street_address": address,
+            "state": state,
+            "zip": zipp,
+            "store_number": store_number,
+            "phone": phone,
+            "location_type": location_type,
+            "hours": hours,
+            "country_code": country_code,
+        }
 
 
-class ExampleSearchIteration(SearchIteration):
-    def __init__(self, http: SgRequests):
-        self.__http = http  # noqa
-        self.__state = CrawlStateSingleton.get_instance()
-
-    def do(
-        self,
-        coord: Tuple[float, float],
-        zipcode: str,  # noqa
-        current_country: str,
-        items_remaining: int,  # noqa
-        found_location_at: Callable[[float, float], None],
-        found_nothing: Callable[[], None],
-    ) -> Iterable[SgRecord]:  # noqa
-        
-        domain = "zara.com"
-        search_lat = coord[0]
-        search_lon = coord[1]
-
-        url = "https://www.zara.com/{}/en/stores-locator/search?lat={}&lng={}&isGlobalSearch=false&showOnlyPickup=false&isDonationOnly=false&ajax=true".format(
-            current_country, search_lat, search_lon
-        )
-        all_locations = http.get(url, headers=hdr)
-        print(all_locations)
-
-        all_locations = all_locations.json()
-        if not all_locations:
-            found_nothing()
-        for poi in all_locations:
-            street_address = poi["addressLines"][0]
-            location_name = poi.get("name")
-            if not location_name:
-                location_name = street_address
-            state = poi.get("state")
-            if state == "--":
-                state = ""
-            if state and state.isdigit():
-                state = ""
-            zip_code = poi["zipCode"]
-            if zip_code and str(zip_code.strip()) == "0":
-                zip_code = ""
-            phone = poi["phones"]
-            phone = phone[0] if phone else ""
-            if phone == "--":
-                phone = ""
-
-            found_location_at(poi["latitude"], poi["longitude"])
-
-            rec_count = self.__state.get_misc_value(
-                current_country, default_factory=lambda: 0
-            )
-            self.__state.set_misc_value(current_country, rec_count + 1)
-
-            yield SgRecord(
-                raw={
-                    "locator_domain": domain,
-                    "page_url": f"https://www.zara.com/{current_country}/en/z-stores-st1404.html?v1=11108",
-                    "location_name": location_name,
-                    "latitude": poi["latitude"],
-                    "longitude": poi["longitude"],
-                    "city": poi["city"],
-                    "store_number": poi["id"],
-                    "street_address": street_address,
-                    "state": state,
-                    "zip": zip_code,
-                    "phone": phone,
-                    "location_type": poi["datatype"],
-                    "hours": "<MISSING>",
-                    "country_code": poi["countryCode"],
-                }
-            )
-
-if __name__ == "__main__":
-    hdr = {
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
-    }
-    # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
-    search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_4()
+def scrape():
+    field_defs = sp.SimpleScraperPipeline.field_definitions(
+        locator_domain=sp.MappingField(mapping=["locator_domain"]),
+        page_url=sp.MappingField(mapping=["page_url"]),
+        location_name=sp.MappingField(
+            mapping=["location_name"],
+        ),
+        latitude=sp.MappingField(
+            mapping=["latitude"],
+        ),
+        longitude=sp.MappingField(
+            mapping=["longitude"],
+        ),
+        street_address=sp.MultiMappingField(
+            mapping=["street_address"], is_required=False
+        ),
+        city=sp.MappingField(
+            mapping=["city"],
+        ),
+        state=sp.MappingField(mapping=["state"], is_required=False),
+        zipcode=sp.MultiMappingField(mapping=["zip"], is_required=False),
+        country_code=sp.MappingField(mapping=["country_code"]),
+        phone=sp.MappingField(mapping=["phone"], is_required=False),
+        store_number=sp.MappingField(
+            mapping=["store_number"], part_of_record_identity=True
+        ),
+        hours_of_operation=sp.MappingField(mapping=["hours"], is_required=False),
+        location_type=sp.MappingField(mapping=["location_type"], is_required=False),
     )
 
-    with SgWriter(
-        deduper=SgRecordDeduper(
-            RecommendedRecordIds.StoreNumberId, duplicate_streak_failure_factor=100
-        )
-    ) as writer:
-        with SgRequests(proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as http:
-            search_iter = ExampleSearchIteration(http=http)
-            par_search = ParallelDynamicSearch(
-                search_maker=search_maker,
-                search_iteration=search_iter,
-                country_codes=[
-                    SearchableCountries.THAILAND
-                ],
-            )
-            #    max_threads=8)
+    pipeline = sp.SimpleScraperPipeline(
+        scraper_name="Crawler",
+        data_fetcher=get_data,
+        field_definitions=field_defs,
+        log_stats_interval=15,
+    )
+    pipeline.run()
 
-            for rec in par_search.run():
-                writer.write_row(rec)
 
-    state = CrawlStateSingleton.get_instance()
+if __name__ == "__main__":
+    scrape()
+
