@@ -63,7 +63,7 @@ def get_data():
             phone_parts = page_soup.find_all("p", attrs={"class": "p-container lt1"})
             for part in phone_parts:
                 if "+" in part.text.strip():
-                    phone = part.test.strip().split("+")[1].split("\n")[0]
+                    phone = part.text.strip().split("+")[1].split("\n")[0]
                     break
             print(phone)
 
