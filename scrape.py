@@ -50,7 +50,7 @@ def get_data():
                 country_code = "<MISSING>"
 
             print(page_url)
-            page_response = session.get(page_url).text
+            page_response = session.get(page_url).text.replacE("<br>", "\n")
             page_soup = bs(page_response, "html.parser")
 
             try:
@@ -60,6 +60,8 @@ def get_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
 
+            phone = page_soup.find("p", attrs={"class": "p-container 1t1"}).text.strip().wplit("+")[1].split("\n")[0]
+            print(phone)
             phone = "<LATER>"
             hours = "<LATER>"
 
