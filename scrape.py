@@ -107,10 +107,14 @@ def get_data():
 
             if "<MISSING>" in hours or hours.replace(" ", "") == "":
                 hours_json = extract_json(page_response.split("openingHoursSpecification")[1])
-                print(hours_json)
-                print("")
-            
-            else:
+                hours = ""
+                for item in hours_json:
+                    for day in item["dayOfWeek"]:
+                        sta = item["opens"]
+                        end = item["closes"]
+                        hours = hours + day + " " + sta + "-" + end + ", "
+                
+                hours = hours[:-2]
                 print(hours)
 
             yield {
