@@ -55,6 +55,7 @@ def get_data():
         phone = "<LATER>"
         location_type = "<LATER>"
         hours = "<LATER>"
+        address = address.replace(" None", "")
 
         yield {
             "locator_domain": locator_domain,
