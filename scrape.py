@@ -114,8 +114,9 @@ def get_data():
                         end = item["closes"]
                         hours = hours + day + " " + sta + "-" + end + ", "
                 
-                hours = hours[:-2]
-                print(hours)
+            if phone == "<MISSING>" or phone.replace(" ", "") == "":
+                phone = page_response.split('telephone": "')[1].split('"')[0].replace("+", "")
+                print(phone)
 
             yield {
                 "locator_domain": locator_domain,
