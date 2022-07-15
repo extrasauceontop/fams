@@ -4,7 +4,7 @@ from sgrequests import SgRequests
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
-
+from proxyfier import ProxyProviders
 
 def fetch_data(sgw: SgWriter):
     api = "https://www.rewe.de/market/content/marketsearch"
@@ -93,6 +93,6 @@ if __name__ == "__main__":
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
     }
-    with SgRequests() as session:
+    with SgRequests(proxy_country="de", proxy_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as session:
         with SgWriter(SgRecordDeduper(RecommendedRecordIds.PageUrlId)) as writer:
             fetch_data(writer)
