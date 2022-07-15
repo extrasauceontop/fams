@@ -6,12 +6,11 @@ from sgscrape.sgrecord_deduper import SgRecordDeduper
 from sgscrape.sgrecord_id import RecommendedRecordIds
 from proxyfier import ProxyProviders
 from sgselenium import SgChrome, SgSelenium
-from proxyfier import ProxyProviders
 
 
 def fetch_data(sgw: SgWriter):
     api = "https://www.rewe.de/market/content/marketsearch"
-    
+
     with SgChrome(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
         mine_headers = SgSelenium.get_default_headers_for(the_driver=driver, request_url="https://www.rewe.de/")
     
