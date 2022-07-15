@@ -21,7 +21,11 @@ def fetch_data(sgw: SgWriter):
             broken = False
         except:
             broken = True
-            js = json.loads(r.text + "}}]}")["markets"]
+            try:
+                js = json.loads(r.text + "}}]}")["markets"]
+
+            except Exception:
+                print(r.response.text)
 
         for j in js:
             a = j.get("address") or {}
