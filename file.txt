@@ -1,0 +1,240 @@
+[
+    {
+        "wwIdent": "565456",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt Kiezko oHG",
+        "contactStreet": "Schleitweg/ Runde Wiese 4",
+        "contactZipCode": "31137",
+        "contactCity": "Hildesheim / Himmelsth\u00fcr",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "540219",
+        "isReweDortmund": false,
+        "companyName": "REWE Ren\u00e9 Hartmann oHG",
+        "contactStreet": "Ernst - Abbe - Str. 2",
+        "contactZipCode": "31141",
+        "contactCity": "Hildesheim / Itzum",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "565497",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt Kiezko oHG",
+        "contactStreet": "Bindersche Str. 5",
+        "contactZipCode": "31188",
+        "contactCity": "Holle",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "565678",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt K\u00f6hler oHG",
+        "contactStreet": "In der Schratwanne 36",
+        "contactZipCode": "31141",
+        "contactCity": "Hildesheim",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "540358",
+        "isReweDortmund": false,
+        "companyName": "REWE Rudat oHG",
+        "contactStreet": "Im Knick 4",
+        "contactZipCode": "31191",
+        "contactCity": "Algermissen",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "21:30"
+            }
+        }
+    },
+    {
+        "wwIdent": "541795",
+        "isReweDortmund": false,
+        "companyName": "REWE Lutz Ahlers oHG",
+        "contactStreet": "Alfelder Stra\u00dfe 55a",
+        "contactZipCode": "31139",
+        "contactCity": "Hildesheim",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "541809",
+        "isReweDortmund": false,
+        "companyName": "REWE Sercan \u00d6v\u00fcc oH",
+        "contactStreet": "Bodenburger Str. 60",
+        "contactZipCode": "31162",
+        "contactCity": "Bad Salzdetfurth",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "willCloseSoon": {
+                "at": "20:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "565712",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt Hennigs oHG",
+        "contactStreet": "Almsstr. 41",
+        "contactZipCode": "31134",
+        "contactCity": "Hildesheim",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "willCloseSoon": {
+                "at": "19:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "565710",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt Oelgeschl\u00e4ger oHG",
+        "contactStreet": "Lange Ma\u00dfe 3",
+        "contactZipCode": "31171",
+        "contactCity": "Nordstemmen",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "21:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "565691",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt L\u00fctge oHG",
+        "contactStreet": "Im Kleinen Maser 1",
+        "contactZipCode": "31195",
+        "contactCity": "Lamspringe",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "21:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "562011",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt Hennigs oHG",
+        "contactStreet": "Phoenixstr. 4",
+        "contactZipCode": "31137",
+        "contactCity": "Hildesheim",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "540862",
+        "isReweDortmund": false,
+        "companyName": "REWE Sercan \u00d6v\u00fcc oH",
+        "contactStreet": "Ahnepaule 2",
+        "contactZipCode": "31162",
+        "contactCity": "Bad Salzdetfurth",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "541742",
+        "isReweDortmund": false,
+        "companyName": "REWE Daniel Harting oHG",
+        "contactStreet": "Vor dem Kampe 1",
+        "contactZipCode": "31180",
+        "contactCity": "Giesen",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "531049",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt GmbH",
+        "contactStreet": "Siemensstr. 11",
+        "contactZipCode": "31135",
+        "contactCity": "Hildesheim",
+        "marketHeadline": "REWE Center",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "531428",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt GmbH",
+        "contactStreet": "Moorberg 1",
+        "contactZipCode": "31157",
+        "contactCity": "Sarstedt",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "241066",
+        "isReweDortmund": false,
+        "companyName": "REWE Cammann oHG",
+        "contactStreet": "Carl-Zeiss-Str. 2",
+        "contactZipCode": "31177",
+        "contactCity": "Harsum",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    },
+    {
+        "wwIdent": "540172",
+        "isReweDortmund": false,
+        "companyName": "REWE Markt GmbH",
+        "contactStreet": "Vossstr. 11-13",
+        "contactZipCode": "31157",
+        "contactCity": "Sarstedt",
+        "marketHeadline": "REWE Markt",
+        "openingInfo": {
+            "isOpen": {
+                "until": "22:00"
+            }
+        }
+    }
+]
