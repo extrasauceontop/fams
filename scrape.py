@@ -5,7 +5,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.pause_resume import CrawlStateSingleton
 from sgrequests import SgRequests
-from sgzip.dynamic import SearchableCountries, Grain_2
+from sgzip.dynamic import SearchableCountries
 from sgzip.parallel import DynamicSearchMaker, ParallelDynamicSearch, SearchIteration
 from sgpostal.sgpostal import parse_address_intl
 
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     }
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", granularity=Grain_2()
+        search_type="DynamicGeoSearch", expected_search_radius_miles=500
     )
 
     with SgWriter(
