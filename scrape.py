@@ -101,7 +101,7 @@ class ExampleSearchIteration(SearchIteration):
                 )
             except:
                 pass
-
+            
             yield SgRecord(
                 raw={
                     "locator_domain": "dollar.com",
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     }
     # additionally to 'search_type', 'DynamicSearchMaker' has all options that all `DynamicXSearch` classes have.
     search_maker = DynamicSearchMaker(
-        search_type="DynamicGeoSearch", expected_search_radius_miles=500
+        search_type="DynamicGeoSearch", expected_search_radius_miles=50
     )
 
     with SgWriter(
