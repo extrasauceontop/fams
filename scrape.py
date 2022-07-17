@@ -4,7 +4,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgChrome
+from sgselenium import SgChrome, SgFirefox
 from proxyfier import ProxyProviders
 
 
@@ -23,8 +23,8 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.k-ruoka.fi/"
     api_url = "https://www.k-ruoka.fi/kr-api/stores?offset=0&limit=-1"
-    with SgChrome(
-        proxy_country="FI",
+    with SgFirefox(
+        proxy_country="fi",
         proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
         response_successful=check_response
     ) as driver:
@@ -35,6 +35,10 @@ def fetch_data(sgw: SgWriter):
         js = json.loads(js_block)
 
         x = 0
+    with SgChrome(
+        proxy_country="fi",
+        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
+    ) as driver:
         for j in js["results"]:
             x = x+1
             if x == 10:
