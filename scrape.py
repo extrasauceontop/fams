@@ -12,14 +12,14 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.k-ruoka.fi/"
     api_url = "https://www.k-ruoka.fi/kr-api/stores?offset=0&limit=-1"
-    with SgFirefox(proxy_country="FI", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, is_headless=False) as driver:
+    with SgFirefox(proxy_country="FI", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, is_headless=True) as driver:
         driver.get(api_url)
         a = driver.page_source
         tree = html.fromstring(a)
         js_block = "".join(tree.xpath('//div[@id="json"]/text()'))
         js = json.loads(js_block)
     print(len(js["results"]))
-    return
+
     with SgChrome(proxy_country="FI", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
         for j in js["results"]:
 
