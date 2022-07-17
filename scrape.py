@@ -32,6 +32,7 @@ def fetch_data(sgw: SgWriter):
     ) as driver:
         driver.get(api_url)
         a = driver.page_source
+        print(a)
         tree = html.fromstring(a)
         js_block = "".join(tree.xpath('//div[@id="json"]/text()'))
         js = json.loads(js_block)
