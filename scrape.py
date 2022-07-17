@@ -4,7 +4,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgChrome, SgFirefox
+from sgselenium import SgChrome
 from proxyfier import ProxyProviders
 
 
@@ -34,20 +34,6 @@ def extract_json(html_string):
 
 
 def fetch_data(sgw: SgWriter):
-    def check_response(response): # noqa
-        print("there")
-        try:
-            a = driver.page_source
-            tree = html.fromstring(a)
-            js_block = "".join(tree.xpath('//div[@id="json"]/text()'))
-            json.loads(js_block)
-            print("here")
-            return True
-        
-        except Exception:
-            return False
-
-
     locator_domain = "https://www.k-ruoka.fi/"
     api_url = "https://www.k-ruoka.fi/kr-api/stores?offset=0&limit=-1"
     with SgChrome(
@@ -56,9 +42,6 @@ def fetch_data(sgw: SgWriter):
     ) as driver:
         driver.get(api_url)
         a = driver.page_source
-        with open("file.txt", "w", encoding="utf-8") as output:
-            print(a, file=output)
-
         js = extract_json(a)[0]
 
         x = 0
@@ -76,14 +59,8 @@ def fetch_data(sgw: SgWriter):
             print(page_url)
             driver.get(page_url)
             a = driver.page_source
-            
-            tree = html.fromstring(a)
-            # js_block = "".join(
-            #     tree.xpath('//script[@type="application/ld+json"]/text()')
-            # )
             js = extract_json(a.split("application/ld+json")[1])[0]
-            with open("file.txt", "w", encoding="utf-8") as output:
-                print(a, file=output)
+
             a = js.get("address")
             street_address = a.get("streetAddress") or "<MISSING>"
             postal = a.get("postalCode") or "<MISSING>"
