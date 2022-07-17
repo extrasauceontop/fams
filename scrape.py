@@ -15,6 +15,7 @@ def fetch_data(sgw: SgWriter):
             tree = html.fromstring(a)
             js_block = "".join(tree.xpath('//div[@id="json"]/text()'))
             json.loads(js_block)
+            print("here")
             return True
         
         except Exception:
