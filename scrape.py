@@ -10,6 +10,7 @@ from proxyfier import ProxyProviders
 
 def fetch_data(sgw: SgWriter):
     def check_response(response): # noqa
+        print("there")
         try:
             a = driver.page_source
             tree = html.fromstring(a)
