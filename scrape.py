@@ -9,12 +9,24 @@ from proxyfier import ProxyProviders
 
 
 def fetch_data(sgw: SgWriter):
+    def check_response(response): # noqa
+        try:
+            a = driver.page_source
+            tree = html.fromstring(a)
+            js_block = "".join(tree.xpath('//div[@id="json"]/text()'))
+            json.loads(js_block)
+            return True
+        
+        except Exception:
+            return False
+
 
     locator_domain = "https://www.k-ruoka.fi/"
     api_url = "https://www.k-ruoka.fi/kr-api/stores?offset=0&limit=-1"
     with SgChrome(
         proxy_country="FI",
-        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER
+        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
+        response_successful=check_response
     ) as driver:
         driver.get(api_url)
         a = driver.page_source
