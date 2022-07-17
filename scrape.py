@@ -4,7 +4,7 @@ from sgscrape.sgrecord import SgRecord
 from sgscrape.sgwriter import SgWriter
 from sgscrape.sgrecord_id import SgRecordID
 from sgscrape.sgrecord_deduper import SgRecordDeduper
-from sgselenium import SgFirefox, SgChrome
+from sgselenium import SgChrome
 from proxyfier import ProxyProviders
 
 
@@ -12,17 +12,21 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.k-ruoka.fi/"
     api_url = "https://www.k-ruoka.fi/kr-api/stores?offset=0&limit=-1"
-    with SgFirefox(proxy_country="FI", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, is_headless=True) as driver:
+    with SgChrome(
+        proxy_country="FI",
+        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER
+    ) as driver:
         driver.get(api_url)
         a = driver.page_source
         tree = html.fromstring(a)
         js_block = "".join(tree.xpath('//div[@id="json"]/text()'))
         js = json.loads(js_block)
-    print(len(js["results"]))
 
-    with SgChrome(proxy_country="FI", proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER) as driver:
+        x = 0
         for j in js["results"]:
-
+            x = x+1
+            if x == 10:
+                return
             slug = j.get("slug")
             page_url = f"https://www.k-ruoka.fi/kauppa/{slug}"
             location_name = j.get("name") or "<MISSING>"
