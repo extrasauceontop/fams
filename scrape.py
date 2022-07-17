@@ -8,6 +8,31 @@ from sgselenium import SgChrome, SgFirefox
 from proxyfier import ProxyProviders
 
 
+def extract_json(html_string):
+    json_objects = []
+    count = 0
+
+    brace_count = 0
+    for element in html_string:
+
+        if element == "{":
+            brace_count = brace_count + 1
+            if brace_count == 1:
+                start = count
+
+        elif element == "}":
+            brace_count = brace_count - 1
+            if brace_count == 0:
+                end = count
+                try:
+                    json_objects.append(json.loads(html_string[start : end + 1]))
+                except Exception:
+                    pass
+        count = count + 1
+
+    return json_objects
+
+
 def fetch_data(sgw: SgWriter):
     def check_response(response): # noqa
         print("there")
@@ -25,23 +50,18 @@ def fetch_data(sgw: SgWriter):
 
     locator_domain = "https://www.k-ruoka.fi/"
     api_url = "https://www.k-ruoka.fi/kr-api/stores?offset=0&limit=-1"
-    with SgFirefox(
-        proxy_country="fi",
-        proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
-        response_successful=check_response
-    ) as driver:
-        driver.get(api_url)
-        a = driver.page_source
-        print(a)
-        tree = html.fromstring(a)
-        js_block = "".join(tree.xpath('//div[@id="json"]/text()'))
-        js = json.loads(js_block)
-
-        x = 0
     with SgChrome(
         proxy_country="fi",
         proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER,
     ) as driver:
+        driver.get(api_url)
+        a = driver.page_source
+        with open("file.txt", "w", encoding="utf-8") as output:
+            print(a, file=output)
+
+        js = extract_json(a)[0]
+
+        x = 0
         for j in js["results"]:
             x = x+1
             if x == 10:
@@ -56,11 +76,14 @@ def fetch_data(sgw: SgWriter):
             print(page_url)
             driver.get(page_url)
             a = driver.page_source
+            
             tree = html.fromstring(a)
-            js_block = "".join(
-                tree.xpath('//script[@type="application/ld+json"]/text()')
-            )
-            js = json.loads(js_block)
+            # js_block = "".join(
+            #     tree.xpath('//script[@type="application/ld+json"]/text()')
+            # )
+            js = extract_json(a.split("application/ld+json")[1])[0]
+            with open("file.txt", "w", encoding="utf-8") as output:
+                print(a, file=output)
             a = js.get("address")
             street_address = a.get("streetAddress") or "<MISSING>"
             postal = a.get("postalCode") or "<MISSING>"
