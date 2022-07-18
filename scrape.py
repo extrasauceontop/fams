@@ -18,7 +18,7 @@ def fetch_data():
     start_url = "https://www.gabriels.be/en/views/ajax?_wrapper_format=drupal_ajax"
     domain = "gabriels.be"
     hdr = {
-        "accept": "application/json, text/javascript, */*; q=0.01",
+        "accept": "application/json",
         "accept-encoding": "gzip, deflate, br",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
