@@ -43,7 +43,9 @@ def fetch_data():
         "ajax_page_state[theme_token]": "",
         "ajax_page_state[libraries]": "ajax_loader/ajax_loader.throbber,better_exposed_filters/auto_submit,better_exposed_filters/general,chosen/drupal.chosen,chosen_lib/chosen.css,dms_theme/fonts,dms_theme/gas_stations__map,dms_theme/global_scripts,dms_theme/global_styles,dms_theme/icon_fonts,eu_cookie_compliance/eu_cookie_compliance_bare,geolocation/location_input.geocoder,geolocation/map_center.fitlocations,geolocation/map_center.static_location,geolocation_google_maps/commonmap.google,geolocation_google_maps/google,geolocation_google_maps/mapfeature.control_locate,geolocation_google_maps/mapfeature.control_maptype,geolocation_google_maps/mapfeature.control_zoom,geolocation_google_maps/mapfeature.marker_clusterer,geolocation_google_maps/mapfeature.marker_infowindow,geolocation_google_places_api/geolocation_google_places_api.geocoder.googleplacesapi,paragraphs/drupal.paragraphs.unpublished,system/base,views/views.ajax,views/views.module,views_infinite_scroll/views-infinite-scroll",
     }
-    data = session.post(start_url, headers=hdr, data=frm).json()
+    data = session.post(start_url, headers=hdr, data=frm)
+    print(data.text)
+    data = data.json()
     with open("file.txt", "w", encoding="utf-8") as output:
         print(data, file=output)
     dom = etree.HTML(data[1]["data"])
