@@ -12,7 +12,7 @@ if __name__ == "__main__":
             return False
 
     url = "https://www.hoogvliet.com/"
-    with SgFirefox(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, is_headless=True) as driver:
+    with SgFirefox(proxy_provider_escalation_order=ProxyProviders.TEST_PROXY_ESCALATION_ORDER, is_headless=True, block_images=True) as driver:
         driver.get(url)
         response = driver.page_source
 
